@@ -88,14 +88,10 @@ class CheckersCanvas extends Canvas implements ActionListener, MouseListener {
    
    /* The next three variables are valid only when the game is in progress. */
    
-   static int currentPlayer;      // Whose turn is it now?  The possible values
-                           //    are CheckersData.RED and CheckersData.BLACK.
    int selectedRow, selectedCol;  // If the current player has selected a piece to
                                   //     move, these give the row and column
                                   //     containing that piece.  If no piece is
                                   //     yet selected, then selectedRow is -1.
-   CheckersMove[] legalMoves;  // An array containing the legal moves for the
-                               //   current player.
    
 
    public CheckersCanvas() {
@@ -135,8 +131,8 @@ class CheckersCanvas extends Canvas implements ActionListener, MouseListener {
          return;
       }
       board.setUpGame();   // Set up the pieces.
-      currentPlayer = CheckersData.RED;   // RED moves first.
-      legalMoves = board.getLegalMoves(CheckersData.RED);  // Get RED's legal moves.
+      board.currentPlayer = CheckersData.RED;   // RED moves first.
+      board.legalMoves = board.getLegalMoves(CheckersData.RED);  // Get RED's legal moves.
       selectedRow = -1;   // RED has not yet selected a piece to move.
       message.setText("Red:  Make your move.");
       gameInProgress = true;
@@ -152,7 +148,7 @@ class CheckersCanvas extends Canvas implements ActionListener, MouseListener {
           message.setText("There is no game in progress!");
           return;
        }
-       if (currentPlayer == CheckersData.RED)
+       if (board.currentPlayer == CheckersData.RED)
           gameOver("RED resigns.  BLACK wins.");
        else
           gameOver("BLACK resigns.  RED winds.");
@@ -180,11 +176,11 @@ class CheckersCanvas extends Canvas implements ActionListener, MouseListener {
          might change a previous selection.)  Reset the message, in
          case it was previously displaying an error message. */
 
-      for (int i = 0; i < legalMoves.length; i++)
-         if (legalMoves[i].fromRow == row && legalMoves[i].fromCol == col) {
+      for (int i = 0; i < board.legalMoves.length; i++)
+         if (board.legalMoves[i].fromRow == row && board.legalMoves[i].fromCol == col) {
             selectedRow = row;
             selectedCol = col;
-            if (currentPlayer == CheckersData.RED)
+            if (board.currentPlayer == CheckersData.RED)
                message.setText("RED:  Make your move.");
             else
                message.setText("BLACK:  Make your move.");
@@ -203,10 +199,10 @@ class CheckersCanvas extends Canvas implements ActionListener, MouseListener {
       /* If the user clicked on a squre where the selected piece can be
          legally moved, then make the move and return. */
 
-      for (int i = 0; i < legalMoves.length; i++)
-         if (legalMoves[i].fromRow == selectedRow && legalMoves[i].fromCol == selectedCol
-                 && legalMoves[i].toRow == row && legalMoves[i].toCol == col) {
-            doMakeMove(legalMoves[i]);
+      for (int i = 0; i < board.legalMoves.length; i++)
+         if (board.legalMoves[i].fromRow == selectedRow && board.legalMoves[i].fromCol == selectedCol
+                 && board.legalMoves[i].toRow == row && board.legalMoves[i].toCol == col) {
+            doMakeMove(board.legalMoves[i]);
             return;
          }
          
@@ -220,7 +216,7 @@ class CheckersCanvas extends Canvas implements ActionListener, MouseListener {
    
 
    void doMakeMove(CheckersMove move) {
-          // Thiis is called when the current player has chosen the specified
+          // This is called when the current player has chosen the specified
           // move.  Make the move, and then either end or continue the game
           // appropriately.
           
@@ -233,9 +229,9 @@ class CheckersCanvas extends Canvas implements ActionListener, MouseListener {
       */
       
       if (move.isJump()) {
-         legalMoves = board.getLegalJumpsFrom(currentPlayer,move.toRow,move.toCol);
-         if (legalMoves != null) {
-            if (currentPlayer == CheckersData.RED)
+    	  board.legalMoves = board.getLegalJumpsFrom(board.currentPlayer,move.toRow,move.toCol);
+         if (board.legalMoves != null) {
+            if (board.currentPlayer == CheckersData.RED)
                message.setText("RED:  You must continue jumping.");
             else
                message.setText("BLACK:  You must continue jumping.");
@@ -250,22 +246,22 @@ class CheckersCanvas extends Canvas implements ActionListener, MouseListener {
          Get that player's legal moves.  If the player has no legal moves,
          then the game ends. */
       
-      if (currentPlayer == CheckersData.RED) {
-         currentPlayer = CheckersData.BLACK;
-         legalMoves = board.getLegalMoves(currentPlayer);
-         if (legalMoves == null)
+      if (board.currentPlayer == CheckersData.RED) {
+    	  board.currentPlayer = CheckersData.BLACK;
+    	  board.legalMoves = board.getLegalMoves(board.currentPlayer);
+         if (board.legalMoves == null)
             gameOver("BLACK has no moves.  RED wins.");
-         else if (legalMoves[0].isJump())
+         else if (board.legalMoves[0].isJump())
             message.setText("BLACK:  Make your move.  You must jump.");
          else
             message.setText("BLACK:  Make your move.");
       }
       else {
-         currentPlayer = CheckersData.RED;
-         legalMoves = board.getLegalMoves(currentPlayer);
-         if (legalMoves == null)
+    	  board.currentPlayer = CheckersData.RED;
+    	  board.legalMoves = board.getLegalMoves(board.currentPlayer);
+         if (board.legalMoves == null)
             gameOver("RED has no moves.  BLACK wins.");
-         else if (legalMoves[0].isJump())
+         else if (board.legalMoves[0].isJump())
             message.setText("RED:  Make your move.  You must jump.");
          else
             message.setText("RED:  Make your move.");
@@ -280,24 +276,24 @@ class CheckersCanvas extends Canvas implements ActionListener, MouseListener {
          select that piece automatically so the use won't have to click on it
          to select it. */
       
-      if (legalMoves != null) {
+      if (board.legalMoves != null) {
          boolean sameStartSquare = true;
-         for (int i = 1; i < legalMoves.length; i++)
-            if (legalMoves[i].fromRow != legalMoves[0].fromRow
-                                 || legalMoves[i].fromCol != legalMoves[0].fromCol) {
+         for (int i = 1; i < board.legalMoves.length; i++)
+            if (board.legalMoves[i].fromRow != board.legalMoves[0].fromRow
+                                 || board.legalMoves[i].fromCol != board.legalMoves[0].fromCol) {
                 sameStartSquare = false;
                 break;
             }
          if (sameStartSquare) {
-            selectedRow = legalMoves[0].fromRow;
-            selectedCol = legalMoves[0].fromCol;
+            selectedRow = board.legalMoves[0].fromRow;
+            selectedCol = board.legalMoves[0].fromCol;
          }
       }
       
       /* Make sure the board is redrawn in its new state. */
       
       repaint();
-      while(currentPlayer == CheckersData.RED)
+      while(board.currentPlayer == CheckersData.RED)
       {
     	  board.ai.MakeAIMove();
       }
@@ -362,8 +358,8 @@ class CheckersCanvas extends Canvas implements ActionListener, MouseListener {
       if (gameInProgress) {
             // First, draw a cyan border around the pieces that can be moved.
          g.setColor(Color.cyan);
-         for (int i = 0; i < legalMoves.length; i++) {
-            g.drawRect(2 + legalMoves[i].fromCol*20, 2 + legalMoves[i].fromRow*20, 19, 19);
+         for (int i = 0; i < board.legalMoves.length; i++) {
+            g.drawRect(2 + board.legalMoves[i].fromCol*20, 2 + board.legalMoves[i].fromRow*20, 19, 19);
          }
             // If a piece is selected for moving (i.e. if selectedRow >= 0), then
             // draw a 2-pixel white border around that piece and draw green borders 
@@ -373,9 +369,9 @@ class CheckersCanvas extends Canvas implements ActionListener, MouseListener {
             g.drawRect(2 + selectedCol*20, 2 + selectedRow*20, 19, 19);
             g.drawRect(3 + selectedCol*20, 3 + selectedRow*20, 17, 17);
             g.setColor(Color.green);
-            for (int i = 0; i < legalMoves.length; i++) {
-               if (legalMoves[i].fromCol == selectedCol && legalMoves[i].fromRow == selectedRow)
-                  g.drawRect(2 + legalMoves[i].toCol*20, 2 + legalMoves[i].toRow*20, 19, 19);
+            for (int i = 0; i < board.legalMoves.length; i++) {
+               if (board.legalMoves[i].fromCol == selectedCol && board.legalMoves[i].fromRow == selectedRow)
+                  g.drawRect(2 + board.legalMoves[i].toCol*20, 2 + board.legalMoves[i].toRow*20, 19, 19);
             }
          }
       }
@@ -475,7 +471,12 @@ class CheckersData {
              BLACK_KING = 4;
 
    int[][] board;  // board[r][c] is the contents of row r, column c.  
-   
+
+   int currentPlayer;      // Whose turn is it now?  The possible values
+                           //    are CheckersData.RED and CheckersData.BLACK.
+
+   CheckersMove[] legalMoves;  // An array containing the legal moves for the
+                               //   current player.   
 
    public CheckersData(CheckersCanvas canvas) {
          // Constructor.  Create the board and set it up for a new game.
@@ -486,12 +487,14 @@ class CheckersData {
    
    public CheckersData(CheckersData data) 
    {
-	      board = new int[8][8];
-	      for (int row = 0; row < 8; row++) {
-	          for (int col = 0; col < 8; col++) {
-	        	 board[row][col] = data.board[row][col]; 
-	          }
+	  board = new int[8][8];
+	  this.currentPlayer = data.currentPlayer;
+	  this.legalMoves = data.legalMoves;
+	  for (int row = 0; row < 8; row++) {
+	      for (int col = 0; col < 8; col++) {
+	    	 board[row][col] = data.board[row][col]; 
 	      }
+	  }
    }
 
 public void setUpGame() {
@@ -566,7 +569,7 @@ public void setUpGame() {
 
    public CheckersMove[] getLegalMoves(int player) {
           // Return an array containing all the legal CheckersMoves
-          // for the specfied player on the current board.  If the player
+          // for the specified player on the current board.  If the player
           // has no legal moves, null is returned.  The value of player
           // should be one of the constants RED or BLACK; if not, null
           // is returned.  If the returned value is non-null, it consists
@@ -582,7 +585,7 @@ public void setUpGame() {
       else
          playerKing = BLACK_KING;
 
-      Vector moves = new Vector();  // Moves will be stored in this vector.
+      Vector<CheckersMove> moves = new Vector<CheckersMove>();  // Moves will be stored in this vector.
       
       /*  First, check for any possible jumps.  Look at each square on the board.
           If that square contains one of the player's pieces, look at a possible
@@ -607,7 +610,7 @@ public void setUpGame() {
       
       /*  If any jump moves were found, then the user must jump, so we don't 
           add any regular moves.  However, if no jumps were found, check for
-          any legal regualar moves.  Look at each square on the board.
+          any legal regular moves.  Look at each square on the board.
           If that square contains one of the player's pieces, look at a possible
           move in each of the four directions from that square.  If there is 
           a legal move in that direction, put it in the moves vector.

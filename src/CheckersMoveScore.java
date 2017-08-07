@@ -2,17 +2,21 @@ import java.util.ArrayList;
 
 public class CheckersMoveScore
 {
+	int playerMove;
+	int playerNextMove;
 	boolean depthBelowCalculated;
 	float score;
 	CheckersMove move;
 	CheckersData board;
 	ArrayList<CheckersMoveScore> moves;
-	CheckersMoveScore(float score,CheckersMove move,CheckersData board)
+	CheckersMoveScore(float score,CheckersMove move,CheckersData board,int playerMove,int playerNextMove)
 	{
+		this.playerMove = playerMove;
+		this.playerNextMove = playerNextMove;
 		depthBelowCalculated = false;
 		this.score = score;
 		this.move = new CheckersMove(move);
-		board = new CheckersData(board);
+		this.board = new CheckersData(board);
 	}
 	void IncreaseDepth(float score,ArrayList<CheckersMoveScore> moves)
 	{
