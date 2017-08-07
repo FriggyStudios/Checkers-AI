@@ -88,7 +88,7 @@ class CheckersCanvas extends Canvas implements ActionListener, MouseListener {
    
    /* The next three variables are valid only when the game is in progress. */
    
-   int currentPlayer;      // Whose turn is it now?  The possible values
+   static int currentPlayer;      // Whose turn is it now?  The possible values
                            //    are CheckersData.RED and CheckersData.BLACK.
    int selectedRow, selectedCol;  // If the current player has selected a piece to
                                   //     move, these give the row and column
@@ -110,8 +110,9 @@ class CheckersCanvas extends Canvas implements ActionListener, MouseListener {
       newGameButton = new Button("New Game");
       newGameButton.addActionListener(this);
       message = new Label("",Label.CENTER);
-      board = new CheckersData();
+      board = new CheckersData(this);
       doNewGame();
+      board.ai.MakeAIMove();
    }
    
 
@@ -296,6 +297,10 @@ class CheckersCanvas extends Canvas implements ActionListener, MouseListener {
       /* Make sure the board is redrawn in its new state. */
       
       repaint();
+      while(currentPlayer == CheckersData.RED)
+      {
+    	  board.ai.MakeAIMove();
+      }
       
    }  // end doMakeMove();
    
@@ -430,6 +435,13 @@ class CheckersMove {
       toRow = r2;
       toCol = c2;
    }
+   CheckersMove(CheckersMove move)
+   {
+	   fromRow = move.fromRow;
+	   fromCol = move.fromCol;
+	   toRow = move.toRow;
+	   toCol = move.toCol;
+   }
    boolean isJump() {
         // Test whether this move is a jump.  It is assumed that
         // the move is legal.  In a jump, the piece moves two
@@ -453,8 +465,8 @@ class CheckersData {
        on the board.  The constants RED and BLACK also represent players
        in the game.
    */
-
-	private AI ai;
+   AI ai;
+   CheckersCanvas canvas;
    public static final int
              EMPTY = 0,
              RED = 1,
@@ -465,13 +477,24 @@ class CheckersData {
    int[][] board;  // board[r][c] is the contents of row r, column c.  
    
 
-   public CheckersData() {
+   public CheckersData(CheckersCanvas canvas) {
          // Constructor.  Create the board and set it up for a new game.
+	  this.canvas = canvas;
       board = new int[8][8];
       setUpGame();
    }
    
-   public void setUpGame() {
+   public CheckersData(CheckersData data) 
+   {
+	      board = new int[8][8];
+	      for (int row = 0; row < 8; row++) {
+	          for (int col = 0; col < 8; col++) {
+	        	 board[row][col] = data.board[row][col]; 
+	          }
+	      }
+   }
+
+public void setUpGame() {
           // Set up the board with checkers in position for the beginning
           // of a game.  Note that checkers can only be found in squares
           // that satisfy  row % 2 == col % 2.  At the start of the game,
@@ -494,7 +517,7 @@ class CheckersData {
       }
       
       ai = new AI(this);
-      ai.ScoreBoard();
+      //ai.MakeAIMove();
    }  // end setUpGame()
    
 
@@ -516,7 +539,6 @@ class CheckersData {
          // Make the specified move.  It is assumed that move
          // is non-null and that the move it represents is legal.
       makeMove(move.fromRow, move.fromCol, move.toRow, move.toCol);
-      ai.ScoreBoard();
    }
    
 
