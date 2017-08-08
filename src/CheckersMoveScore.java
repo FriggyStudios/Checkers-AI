@@ -6,11 +6,13 @@ public class CheckersMoveScore
 	int playerNextMove;
 	boolean depthBelowCalculated;
 	float score;
+	CheckersMoveScore moveAbove;
 	CheckersMove move;
 	CheckersData board;
 	ArrayList<CheckersMoveScore> moves;
-	CheckersMoveScore(float score,CheckersMove move,CheckersData board,int playerMove,int playerNextMove)
+	CheckersMoveScore(CheckersMoveScore moveAbove,float score,CheckersMove move,CheckersData board,int playerMove,int playerNextMove)
 	{
+		this.moveAbove = moveAbove;
 		this.playerMove = playerMove;
 		this.playerNextMove = playerNextMove;
 		depthBelowCalculated = false;
@@ -18,11 +20,14 @@ public class CheckersMoveScore
 		this.move = new CheckersMove(move);
 		this.board = new CheckersData(board);
 	}
-	void IncreaseDepth(float score,ArrayList<CheckersMoveScore> moves)
+	void IncreaseDepth(ArrayList<CheckersMoveScore> moves)
 	{
 		depthBelowCalculated = true;
-		this.score = score;
 		this.moves = new ArrayList<CheckersMoveScore>(moves);		
+	}
+	void UpdateScore(float score)
+	{
+		this.score = score;
 	}
 }
 

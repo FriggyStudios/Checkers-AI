@@ -293,10 +293,6 @@ class CheckersCanvas extends Canvas implements ActionListener, MouseListener {
       /* Make sure the board is redrawn in its new state. */
       
       repaint();
-      while(board.currentPlayer == CheckersData.RED)
-      {
-    	  board.ai.MakeAIMove();
-      }
       
    }  // end doMakeMove();
    
@@ -305,6 +301,10 @@ class CheckersCanvas extends Canvas implements ActionListener, MouseListener {
         // The paint method completely redraws the canvas, so don't erase
         // before calling paint().
       paint(g);
+      while(board.currentPlayer == CheckersData.RED)
+      {
+    	  board.ai.MakeAIMove();
+      }
    }
    
 

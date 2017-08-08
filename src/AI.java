@@ -2,9 +2,8 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public class AI
 {
@@ -135,6 +134,13 @@ public class AI
 	
 	public void MakeAIMove()
 	{
+		try {
+			TimeUnit.MILLISECONDS.sleep(100);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
 		CheckersMove[] moves = data.getLegalMoves(CheckersData.RED);
 		float[] scores = new float[moves.length];
 		CheckersMoveScore[] moveScores = new CheckersMoveScore[moves.length];
@@ -149,7 +155,7 @@ public class AI
 			if (moves[i].isJump())
 			{
 				CheckersMove[] localCheckersMove = localData.getLegalJumpsFrom(localData.currentPlayer,moves[i].toRow,moves[i].toCol);
-		         if (localCheckersMove != null) 
+		         if (localCheckersMove == null) 
 		         {
 		        	 if (localData.currentPlayer == CheckersData.RED)
 		        		  localData.currentPlayer = CheckersData.BLACK;
@@ -161,15 +167,49 @@ public class AI
         	 		  localData.currentPlayer = CheckersData.BLACK;
 	              else
 	            	  localData.currentPlayer = CheckersData.RED;
-			moveScores[i] = new CheckersMoveScore(scores[i],moves[i],localData,playerMove,localData.currentPlayer);
+			moveScores[i] = new CheckersMoveScore(null,scores[i],moves[i],localData,playerMove,localData.currentPlayer);
 		}
+		
+		IncreaseDepth(moveScores);
+		
+		int bestMoveIndex = 0;
 		for(int i = 0;i < moveScores.length;i++)
 		{
-			CheckersData localData = new CheckersData(moveScores[i].board);
-			if (moves[i].isJump())
+			if(moveScores[i].score > moveScores[bestMoveIndex].score)
 			{
-				//localData.legalMoves = localData.getLegalJumpsFrom(localData.currentPlayer,moves[i].toRow,moves[i].toCol);
+				bestMoveIndex = i;
 			}
+		}
+		data.canvas.doMakeMove(moves[bestMoveIndex]);
+	}
+	
+	private void IncreaseDepth(CheckersMoveScore[] moveScores)
+	{
+		//Find depth calculated already
+		int maxDepth = 0;
+		CheckersMoveScore depthChecker = moveScores[0];
+		while(true)
+		{
+			if(!depthChecker.depthBelowCalculated)
+			{
+				break;
+			}
+			else
+			{
+				maxDepth++;
+				depthChecker = depthChecker.moves.get(0);
+			}
+		}
+		
+		//Add each new move to be added
+		//Store each move by reference
+		//Entry is move at first index depth
+		ArrayList<ArrayList<CheckersMoveScore>> branchMoves = new ArrayList<ArrayList<CheckersMoveScore>>();
+		
+		//Calculate scores for each move in new depth
+		for(int i = 0;i < branchMoves.get(maxDepth).size();i++)
+		{
+			CheckersData localData = new CheckersData(branchMoves.get(maxDepth).get(i).board);
 			ArrayList<CheckersMoveScore> localMoveScores = new ArrayList<CheckersMoveScore>();
 			int scoreIndex = 0;
 			for(int j = 0;j < localData.legalMoves.length;j++)
@@ -180,7 +220,7 @@ public class AI
 				if (localData.legalMoves[j].isJump()) 
 				{
 					CheckersMove[] localCheckersMove = localData.getLegalJumpsFrom(localData.currentPlayer,localData.legalMoves[j].toRow,localData.legalMoves[j].toCol);
-					if (localCheckersMove != null) 
+					if (localCheckersMove == null) 
 					{
 						if (localData.currentPlayer == CheckersData.RED)
 							localData.currentPlayer = CheckersData.BLACK;
@@ -192,56 +232,58 @@ public class AI
 	        	 		  localData.currentPlayer = CheckersData.BLACK;
 		              else
 		            	  localData.currentPlayer = CheckersData.RED;
-				localMoveScores.add(new CheckersMoveScore(score,localData.legalMoves[j],localData,playerMove,localData.currentPlayer));
-				if(moveScores[i].playerMove == CheckersData.RED)
+				localMoveScores.add(new CheckersMoveScore(branchMoves.get(maxDepth).get(i),score,localData.legalMoves[j],localData,playerMove,localData.currentPlayer));
+			}			
+			branchMoves.get(maxDepth).get(i).IncreaseDepth(localMoveScores);
+		}
+		//Update scores back through each CheckersMove
+		for(int i = maxDepth-1;i >= 0;i--)
+		{
+			for(int k = 0;k < branchMoves.get(i).size();k++)
+			{
+				CheckersData localData = new CheckersData(branchMoves.get(i).get(k).board);
+				//Loop through 'next moves' instead
+				for(int j = 0;j < localData.legalMoves.length;j++)
 				{
-					if(moveScores[i].playerMove != moveScores[i].playerMove)
+					if(moveScores[i].playerMove == CheckersData.RED)
 					{
-						if(localMoveScores.get(j).score < localMoveScores.get(scoreIndex).score)
+						if(moveScores[i].playerMove != moveScores[i].playerMove)
 						{
-							scoreIndex = j;
+							if(localMoveScores.get(j).score < localMoveScores.get(scoreIndex).score)
+							{
+								scoreIndex = j;
+							}
+						}
+						else
+						{
+							if(localMoveScores.get(j).score > localMoveScores.get(scoreIndex).score)
+							{
+								scoreIndex = j;
+							}
 						}
 					}
 					else
 					{
-						if(localMoveScores.get(j).score > localMoveScores.get(scoreIndex).score)
+						if(moveScores[i].playerMove != moveScores[i].playerMove)
 						{
-							scoreIndex = j;
+							if(localMoveScores.get(j).score > localMoveScores.get(scoreIndex).score)
+							{
+								scoreIndex = j;
+							}
+						}
+						else
+						{
+							if(localMoveScores.get(j).score < localMoveScores.get(scoreIndex).score)
+							{
+								scoreIndex = j;
+							}
 						}
 					}
 				}
-				else
-				{
-					if(moveScores[i].playerMove != moveScores[i].playerMove)
-					{
-						if(localMoveScores.get(j).score > localMoveScores.get(scoreIndex).score)
-						{
-							scoreIndex = j;
-						}
-					}
-					else
-					{
-						if(localMoveScores.get(j).score < localMoveScores.get(scoreIndex).score)
-						{
-							scoreIndex = j;
-						}
-					}
-				}	
-			}			
-			moveScores[i].IncreaseDepth(localMoveScores.get(scoreIndex).score, localMoveScores);
-		}
-		
-		int bestMoveIndex = 0;
-		for(int i = 0;i < moveScores.length;i++)
-		{
-			if(moveScores[i].score > scores[bestMoveIndex])
-			{
-				bestMoveIndex = i;
 			}
 		}
-		data.canvas.doMakeMove(moves[bestMoveIndex]);
 	}
-	
+	localMoveScores.get(scoreIndex).score
 	void WriteCoeff()
 	{
 		//Serialization to file
