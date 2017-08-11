@@ -309,7 +309,7 @@ class CheckersCanvas extends Canvas implements ActionListener, MouseListener {
    
 
    public void paint(Graphics g) {
-        // Draw  checkerboard pattern in gray and lightGray.  Draw the
+        // Draw  checker board pattern in gray and lightGray.  Draw the
         // checkers.  If a game is in progress, hilite the legal moves.
       
       /* Draw a two-pixel black border around the edges of the canvas. */
@@ -318,7 +318,7 @@ class CheckersCanvas extends Canvas implements ActionListener, MouseListener {
       g.drawRect(0,0,getSize().width-1,getSize().height-1);
       g.drawRect(1,1,getSize().width-3,getSize().height-3);
       
-      /* Draw the squares of the checkerboard and the checkers. */
+      /* Draw the squares of the checker board and the checkers. */
       
       for (int row = 0; row < 8; row++) {
          for (int col = 0; col < 8; col++) {
@@ -422,14 +422,14 @@ class CheckersMove {
      // It holds the row and column of the piece that is to be moved
      // and the row and column of the square to which it is to be moved.
      // (This class makes no guarantee that the move is legal.)
-   int fromRow, fromCol;  // Position of piece to be moved.
-   int toRow, toCol;      // Square it is to move to.
+   byte fromRow, fromCol;  // Position of piece to be moved.
+   byte toRow, toCol;      // Square it is to move to.
    CheckersMove(int r1, int c1, int r2, int c2) {
         // Constructor.  Just set the values of the instance variables.
-      fromRow = r1;
-      fromCol = c1;
-      toRow = r2;
-      toCol = c2;
+      fromRow = (byte) r1;
+      fromCol = (byte) c1;
+      toRow = (byte) r2;
+      toCol = (byte) c2;
    }
    CheckersMove(CheckersMove move)
    {
@@ -463,16 +463,16 @@ class CheckersData {
    */
    AI ai;
    CheckersCanvas canvas;
-   public static final int
+   public static final byte
              EMPTY = 0,
              RED = 1,
              RED_KING = 2,
              BLACK = 3,
              BLACK_KING = 4;
 
-   int[][] board;  // board[r][c] is the contents of row r, column c.  
+   byte[][] board;  // board[r][c] is the contents of row r, column c.  
 
-   int currentPlayer;      // Whose turn is it now?  The possible values
+   byte currentPlayer;      // Whose turn is it now?  The possible values
                            //    are CheckersData.RED and CheckersData.BLACK.
 
    CheckersMove[] legalMoves;  // An array containing the legal moves for the
@@ -481,13 +481,13 @@ class CheckersData {
    public CheckersData(CheckersCanvas canvas) {
          // Constructor.  Create the board and set it up for a new game.
 	  this.canvas = canvas;
-      board = new int[8][8];
+      board = new byte[8][8];
       setUpGame();
    }
    
    public CheckersData(CheckersData data) 
    {
-	  board = new int[8][8];
+	  board = new byte[8][8];
 	  this.currentPlayer = data.currentPlayer;
 	  this.legalMoves = data.legalMoves;
 	  for (int row = 0; row < 8; row++) {
@@ -530,7 +530,7 @@ public void setUpGame() {
    }
    
 
-   public void setPieceAt(int row, int col, int piece) {
+   public void setPieceAt(int row, int col, byte piece) {
           // Set the contents of the square in the specified row and column.
           // piece must be one of the constants EMPTY, RED, BLACK, RED_KING,
           // BLACK_KING.
@@ -592,9 +592,8 @@ public void setUpGame() {
           jump in each of the four directions from that square.  If there is 
           a legal jump in that direction, put it in the moves vector.
       */
-
-      for (int row = 0; row < 8; row++) {
-         for (int col = 0; col < 8; col++) {
+      for (byte row = 0; row < 8; row++) {
+         for (byte col = 0; col < 8; col++) {
             if (board[row][col] == player || board[row][col] == playerKing) {
                if (canJump(player, row, col, row+1, col+1, row+2, col+2))
                   moves.addElement(new CheckersMove(row, col, row+2, col+2));

@@ -3,6 +3,7 @@ import java.io.FileOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
 public class AI
@@ -12,12 +13,12 @@ public class AI
 	//RedPieces,-BlackPieces,RedKingPieces,-BlackKingPieces,RedHoppingOpportunities,-BlackHoppingOpportunities,RedCenters,-BlackCenters
 	ArrayList<Float> polynomialCoefficients;
 	CheckersData data;
+	int depth = 7;
 	
 	@SuppressWarnings("unchecked")
 	public AI(CheckersData data)
 	{
 		this.data = data;
-		
 		try
 		{
 			FileInputStream fileStream = new FileInputStream("coeff.dat");
@@ -38,10 +39,10 @@ public class AI
 			polynomialCoefficients.add(.1f);
 			polynomialCoefficients.add(.2f);
 			polynomialCoefficients.add(.2f);
-			polynomialCoefficients.add(.8f);
-			polynomialCoefficients.add(.8f);
-			polynomialCoefficients.add(.25f);
-			polynomialCoefficients.add(.25f);
+			polynomialCoefficients.add(.0f);
+			polynomialCoefficients.add(.0f);
+			polynomialCoefficients.add(.0f);
+			polynomialCoefficients.add(.0f);
 			WriteCoeff();
 		}
 	}
@@ -62,7 +63,7 @@ public class AI
 				if(dataLocal.board[i][j] == CheckersData.RED)
 				{
 					RedPieces++;
-					if(( i == 2 || i == 4) && j == 4)
+					/*if(( i == 2 || i == 4) && j == 4)
 					{
 						RedCenters++;
 					}
@@ -73,12 +74,12 @@ public class AI
 					if(dataLocal.canJump(CheckersData.RED, i, j, i+1, j-1, i+2, j-2))
 					{
 						RedHoppingOpportunities++;
-					}
+					}*/
 				}
 				else if(dataLocal.board[i][j] == CheckersData.BLACK)
 				{
 					BlackPieces++;
-					if(( i == 3 || i == 5) && j == 3)
+					/*if(( i == 3 || i == 5) && j == 3)
 					{
 						BlackCenters++;
 					}
@@ -89,12 +90,12 @@ public class AI
 					if(dataLocal.canJump(CheckersData.BLACK, i, j, i+1, j+1, i+2, j+2))
 					{
 						BlackHoppingOpportunities++;
-					}
+					}*/
 				}
 				else if(dataLocal.board[i][j] == CheckersData.RED_KING)
 				{
 					RedKingPieces++;
-					if(( i == 2 || i == 4) && j == 4)
+					/*if(( i == 2 || i == 4) && j == 4)
 					{
 						RedCenters++;
 					}
@@ -106,11 +107,19 @@ public class AI
 					{
 						RedHoppingOpportunities++;
 					}
+					if(dataLocal.canJump(CheckersData.RED, i, j, i-1, j+1, i-2, j+2))
+					{
+						RedHoppingOpportunities++;
+					}
+					if(dataLocal.canJump(CheckersData.RED, i, j, i+1, j+1, i+2, j+2))
+					{
+						RedHoppingOpportunities++;
+					}*/
 				}
 				else if(dataLocal.board[i][j] == CheckersData.BLACK_KING)
 				{
 					BlackKingPieces++;
-					if(( i == 3 || i == 5) && j == 3)
+					/*if(( i == 3 || i == 5) && j == 3)
 					{
 						BlackCenters++;
 					}
@@ -122,6 +131,14 @@ public class AI
 					{
 						BlackHoppingOpportunities++;
 					}
+					if(dataLocal.canJump(CheckersData.BLACK, i, j, i-1, j+1, i-2, j+2))
+					{
+						BlackHoppingOpportunities++;
+					}
+					if(dataLocal.canJump(CheckersData.BLACK, i, j, i+1, j+1, i+2, j+2))
+					{
+						BlackHoppingOpportunities++;
+					}	*/				
 				}
 			}
 		}
@@ -133,158 +150,149 @@ public class AI
 	}
 	
 	public void MakeAIMove()
-	{
-		try {
-			TimeUnit.MILLISECONDS.sleep(100);
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		
+	{		
 		CheckersMove[] moves = data.getLegalMoves(CheckersData.RED);
 		float[] scores = new float[moves.length];
-		CheckersMoveScore[] moveScores = new CheckersMoveScore[moves.length];
-		
+		ArrayList<CheckersMoveScore> moveScores = new ArrayList<CheckersMoveScore>();
+
 		for(int i = 0;i < moves.length;i++)
 		{
 			CheckersData localData = new CheckersData(data);
+			byte playerMove = localData.currentPlayer;
+			byte playerMoveNext = localData.currentPlayer;
 			
 			localData.makeMove(moves[i]);
 			scores[i] = ScoreBoard(localData);
-			int playerMove = localData.currentPlayer;
 			if (moves[i].isJump())
 			{
 				CheckersMove[] localCheckersMove = localData.getLegalJumpsFrom(localData.currentPlayer,moves[i].toRow,moves[i].toCol);
 		         if (localCheckersMove == null) 
 		         {
 		        	 if (localData.currentPlayer == CheckersData.RED)
-		        		  localData.currentPlayer = CheckersData.BLACK;
+	        		 	  playerMoveNext = CheckersData.BLACK;
 		              else
-		            	  localData.currentPlayer = CheckersData.RED;
+		            	  playerMoveNext = CheckersData.RED;
 		         }
 			}
 	         else if (localData.currentPlayer == CheckersData.RED)
-        	 		  localData.currentPlayer = CheckersData.BLACK;
+        	 		  playerMoveNext = CheckersData.BLACK;
 	              else
-	            	  localData.currentPlayer = CheckersData.RED;
-			moveScores[i] = new CheckersMoveScore(null,scores[i],moves[i],localData,playerMove,localData.currentPlayer);
+	            	  playerMoveNext = CheckersData.RED;
+			localData.currentPlayer = playerMoveNext;
+			moveScores.add(new CheckersMoveScore(null,scores[i],moves[i],localData,playerMove,playerMoveNext));
 		}
-		
-		IncreaseDepth(moveScores);
-		
-		int bestMoveIndex = 0;
-		for(int i = 0;i < moveScores.length;i++)
+		for(int i = 0;i < depth;i++)
 		{
-			if(moveScores[i].score > moveScores[bestMoveIndex].score)
+			IncreaseDepth(moveScores,i);
+		}
+		int bestMoveIndex = 0;
+		for(int i = 0;i < moveScores.size();i++)
+		{
+			if(moveScores.get(i).score > moveScores.get(bestMoveIndex).score)
 			{
 				bestMoveIndex = i;
 			}
 		}
-		data.canvas.doMakeMove(moves[bestMoveIndex]);
+		data.canvas.doMakeMove(moveScores.get(bestMoveIndex).move);
 	}
 	
-	private void IncreaseDepth(CheckersMoveScore[] moveScores)
-	{
-		//Find depth calculated already
-		int maxDepth = 0;
-		CheckersMoveScore depthChecker = moveScores[0];
-		while(true)
-		{
-			if(!depthChecker.depthBelowCalculated)
-			{
-				break;
-			}
-			else
-			{
-				maxDepth++;
-				depthChecker = depthChecker.moves.get(0);
-			}
-		}
-		
+	private void IncreaseDepth(ArrayList<CheckersMoveScore> moveScores,int maxDepth)
+	{		
 		//Add each new move to be added
 		//Store each move by reference
 		//Entry is move at first index depth
 		ArrayList<ArrayList<CheckersMoveScore>> branchMoves = new ArrayList<ArrayList<CheckersMoveScore>>();
+		branchMoves.add(moveScores);
+		for(int i = 0;i < maxDepth;i++)
+		{
+			ArrayList<CheckersMoveScore> localDepthMoves = new ArrayList<CheckersMoveScore>();
+			for(int j = 0;j < branchMoves.get(i).size();j++)
+			{
+				CheckersMoveScore localMove = branchMoves.get(i).get(j);
+				if(!localMove.goalState)
+				{
+					for(int k = 0;k < localMove.moves.size();k++)
+					{
+						localDepthMoves.add(localMove.moves.get(k));
+					}
+				}
+			}
+			branchMoves.add(localDepthMoves);
+		}
 		
 		//Calculate scores for each move in new depth
 		for(int i = 0;i < branchMoves.get(maxDepth).size();i++)
 		{
 			CheckersData localData = new CheckersData(branchMoves.get(maxDepth).get(i).board);
+			CheckersData localDataTemp = new CheckersData(branchMoves.get(maxDepth).get(i).board);
 			ArrayList<CheckersMoveScore> localMoveScores = new ArrayList<CheckersMoveScore>();
-			int scoreIndex = 0;
-			for(int j = 0;j < localData.legalMoves.length;j++)
+			CheckersMove[] moves = localData.getLegalMoves(localData.currentPlayer);
+			if(!branchMoves.get(maxDepth).get(i).goalState)
 			{
-				localData.makeMove(localData.legalMoves[j]);
-				float score = ScoreBoard(localData);
-				int playerMove = localData.currentPlayer;
-				if (localData.legalMoves[j].isJump()) 
+				for(int j = 0;j < moves.length;j++)
 				{
-					CheckersMove[] localCheckersMove = localData.getLegalJumpsFrom(localData.currentPlayer,localData.legalMoves[j].toRow,localData.legalMoves[j].toCol);
-					if (localCheckersMove == null) 
+					localData = new CheckersData(localDataTemp);
+					byte playerMove = localData.currentPlayer;
+					byte playerMoveNext = localData.currentPlayer;
+					localData.makeMove(moves[j]);
+					float score = ScoreBoard(localData);
+					if(score > 0)
+						System.out.println("Scoreboard: " + score);
+					if (moves[j].isJump()) 
 					{
-						if (localData.currentPlayer == CheckersData.RED)
-							localData.currentPlayer = CheckersData.BLACK;
-		              	else
-		              		localData.currentPlayer = CheckersData.RED;
+						CheckersMove[] localCheckersMove = localData.getLegalJumpsFrom(localData.currentPlayer,moves[j].toRow,moves[j].toCol);
+						if (localCheckersMove == null) 
+						{
+							if (localData.currentPlayer == CheckersData.RED)
+								playerMoveNext = CheckersData.BLACK;
+			              	else
+			              		playerMoveNext = CheckersData.RED;
+						}
 					}
-				}
-		         else if (localData.currentPlayer == CheckersData.RED)
-	        	 		  localData.currentPlayer = CheckersData.BLACK;
-		              else
-		            	  localData.currentPlayer = CheckersData.RED;
-				localMoveScores.add(new CheckersMoveScore(branchMoves.get(maxDepth).get(i),score,localData.legalMoves[j],localData,playerMove,localData.currentPlayer));
-			}			
-			branchMoves.get(maxDepth).get(i).IncreaseDepth(localMoveScores);
+			         else if (localData.currentPlayer == CheckersData.RED)
+			        	 	  playerMoveNext = CheckersData.BLACK;
+			              else
+			            	  playerMoveNext = CheckersData.RED;
+					localData.currentPlayer = playerMoveNext;
+					localMoveScores.add(new CheckersMoveScore(branchMoves.get(maxDepth).get(i),score,moves[j],localData,playerMove,playerMoveNext));
+				}	
+				branchMoves.get(maxDepth).get(i).IncreaseDepth(localMoveScores);
+			}
 		}
+		
 		//Update scores back through each CheckersMove
-		for(int i = maxDepth-1;i >= 0;i--)
+		for(int i = maxDepth;i >= 0;i--)
 		{
 			for(int k = 0;k < branchMoves.get(i).size();k++)
 			{
-				CheckersData localData = new CheckersData(branchMoves.get(i).get(k).board);
-				//Loop through 'next moves' instead
-				for(int j = 0;j < localData.legalMoves.length;j++)
+				CheckersMoveScore localMove = branchMoves.get(i).get(k);
+				int scoreIndex = 0;
+				if(!localMove.goalState)
 				{
-					if(moveScores[i].playerMove == CheckersData.RED)
+					for(int j = 0;j < localMove.moves.size();j++)
 					{
-						if(moveScores[i].playerMove != moveScores[i].playerMove)
+						if(localMove.playerMove == CheckersData.RED)
 						{
-							if(localMoveScores.get(j).score < localMoveScores.get(scoreIndex).score)
+							if(localMove.moves.get(j).score > localMove.moves.get(scoreIndex).score)
 							{
 								scoreIndex = j;
 							}
 						}
 						else
 						{
-							if(localMoveScores.get(j).score > localMoveScores.get(scoreIndex).score)
+							if(localMove.moves.get(j).score < localMove.moves.get(scoreIndex).score)
 							{
 								scoreIndex = j;
 							}
 						}
 					}
-					else
-					{
-						if(moveScores[i].playerMove != moveScores[i].playerMove)
-						{
-							if(localMoveScores.get(j).score > localMoveScores.get(scoreIndex).score)
-							{
-								scoreIndex = j;
-							}
-						}
-						else
-						{
-							if(localMoveScores.get(j).score < localMoveScores.get(scoreIndex).score)
-							{
-								scoreIndex = j;
-							}
-						}
-					}
+					localMove.UpdateScore(branchMoves.get(i).get(k).moves.get(scoreIndex).score);
 				}
 			}
 		}
 	}
-	localMoveScores.get(scoreIndex).score
-	void WriteCoeff()
+	
+void WriteCoeff()
 	{
 		//Serialization to file
 		try
