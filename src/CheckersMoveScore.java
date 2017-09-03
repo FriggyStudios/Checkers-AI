@@ -1,6 +1,6 @@
 import java.util.ArrayList;
 
-public class CheckersMoveScore
+public class CheckersMoveScore implements Comparable<CheckersMoveScore>
 {
 	byte playerMove;
 	byte playerNextMove;
@@ -27,14 +27,26 @@ public class CheckersMoveScore
 				if(board.board[i][j] == CheckersData.RED)
 				{
 					RedPieces++;
+					if(BlackPieces != 0)
+					{
+						break;
+					}
 				}
 				else if(board.board[i][j] == CheckersData.BLACK)
 				{
 					BlackPieces++;
+					if(RedPieces != 0)
+					{
+						break;
+					}
 				}
 			}
+			if(RedPieces != 0 && BlackPieces != 0)
+			{
+				break;
+			}
 		}
-		if(RedPieces == 0 || BlackPieces == 0)
+		if(RedPieces == 0 && BlackPieces == 0)
 		{
 			goalState = true;
 		}
@@ -54,6 +66,10 @@ public class CheckersMoveScore
 	void UpdateScore(float score)
 	{
 		this.score = score;
+	}
+	public int compareTo(CheckersMoveScore other)
+	{
+		return (int)((score-other.score)*10000);
 	}
 }
 

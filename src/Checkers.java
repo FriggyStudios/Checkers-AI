@@ -449,6 +449,7 @@ class CheckersMove {
 
 
 
+//implement board Sparse Matrix!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 class CheckersData {
 
       // An object of this class holds data about a game of checkers.
@@ -480,9 +481,12 @@ class CheckersData {
 
    public CheckersData(CheckersCanvas canvas) {
          // Constructor.  Create the board and set it up for a new game.
-	  this.canvas = canvas;
       board = new byte[8][8];
-      setUpGame();
+	  if(canvas != null)
+	  {
+	    this.canvas = canvas;
+        setUpGame();
+	  }
    }
    
    public CheckersData(CheckersData data) 
@@ -496,6 +500,34 @@ class CheckersData {
 	      }
 	  }
    }
+   
+@Override
+public boolean equals(Object o) 
+{ 
+	// self check
+    if (this == o)
+        return true;
+    // null check
+    if (o == null)
+        return false; 
+    // type check and cast
+    if (getClass() != o.getClass())
+        return false;
+    CheckersData data = (CheckersData) o;
+    if(currentPlayer != data.currentPlayer)
+    {
+    	return false;
+    }
+	for (int row = 0; row < 8; row++) {
+	      for (int col = 0; col < 8; col++) {
+	    	 if(board[row][col] != data.board[row][col])
+	    	 {
+	    		 return false;
+	    	 }
+	      }
+	  }
+	return true;
+}
 
 public void setUpGame() {
           // Set up the board with checkers in position for the beginning
@@ -660,7 +692,7 @@ public void setUpGame() {
          playerKing = RED_KING;
       else
          playerKing = BLACK_KING;
-      Vector moves = new Vector();  // The legal jumps will be stored in this vector.
+      Vector<CheckersMove> moves = new Vector<CheckersMove>();  // The legal jumps will be stored in this vector.
       if (board[row][col] == player || board[row][col] == playerKing) {
          if (canJump(player, row, col, row+1, col+1, row+2, col+2))
             moves.addElement(new CheckersMove(row, col, row+2, col+2));

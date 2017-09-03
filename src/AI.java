@@ -3,21 +3,22 @@ import java.io.FileOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.concurrent.TimeUnit;
+import java.util.Collections;
 
 public class AI
 {
 	//Coefficients range from 0 to 1
 	//Entries multiplied by below values in that order to calculate favourability of a board to a player
 	//RedPieces,-BlackPieces,RedKingPieces,-BlackKingPieces,RedHoppingOpportunities,-BlackHoppingOpportunities,RedCenters,-BlackCenters
-	ArrayList<Float> polynomialCoefficients;
+	static ArrayList<Float> polynomialCoefficients;
 	CheckersData data;
-	int depth = 7;
+	int depth = 8;
+	ArrayList<ArrayList<CheckersMoveScore>> branchMoves;
+	CheckersMoveScore prevMove;
 	
 	@SuppressWarnings("unchecked")
 	public AI(CheckersData data)
-	{
+	{		
 		this.data = data;
 		try
 		{
@@ -37,8 +38,8 @@ public class AI
 			polynomialCoefficients = new ArrayList<Float>();
 			polynomialCoefficients.add(.1f);
 			polynomialCoefficients.add(.1f);
-			polynomialCoefficients.add(.2f);
-			polynomialCoefficients.add(.2f);
+			polynomialCoefficients.add(.15f);
+			polynomialCoefficients.add(.15f);
 			polynomialCoefficients.add(.0f);
 			polynomialCoefficients.add(.0f);
 			polynomialCoefficients.add(.0f);
@@ -48,7 +49,7 @@ public class AI
 	}
 	//Favourability board position for player red
 	//Returns float from low(bad for red) to high(good for red)
-	private float ScoreBoard(CheckersData dataLocal)
+	static float ScoreBoard(CheckersData dataLocal)
 	{
 		int RedPieces=0; int BlackPieces = 0;
 		int RedKingPieces = 0; int BlackKingPieces = 0;
@@ -155,35 +156,102 @@ public class AI
 		float[] scores = new float[moves.length];
 		ArrayList<CheckersMoveScore> moveScores = new ArrayList<CheckersMoveScore>();
 
-		for(int i = 0;i < moves.length;i++)
+		if(branchMoves == null)
 		{
-			CheckersData localData = new CheckersData(data);
-			byte playerMove = localData.currentPlayer;
-			byte playerMoveNext = localData.currentPlayer;
-			
-			localData.makeMove(moves[i]);
-			scores[i] = ScoreBoard(localData);
-			if (moves[i].isJump())
+			for(int i = 0;i < moves.length;i++)
 			{
-				CheckersMove[] localCheckersMove = localData.getLegalJumpsFrom(localData.currentPlayer,moves[i].toRow,moves[i].toCol);
-		         if (localCheckersMove == null) 
-		         {
-		        	 if (localData.currentPlayer == CheckersData.RED)
-	        		 	  playerMoveNext = CheckersData.BLACK;
+				CheckersData localData = new CheckersData(data);
+				byte playerMove = localData.currentPlayer;
+				byte playerMoveNext = localData.currentPlayer;
+				
+				localData.makeMove(moves[i]);
+				scores[i] = ScoreBoard(localData);
+				if (moves[i].isJump())
+				{
+					CheckersMove[] localCheckersMove = localData.getLegalJumpsFrom(localData.currentPlayer,moves[i].toRow,moves[i].toCol);
+			         if (localCheckersMove == null) 
+			         {
+			        	 if (localData.currentPlayer == CheckersData.RED)
+		        		 	  playerMoveNext = CheckersData.BLACK;
+			              else
+			            	  playerMoveNext = CheckersData.RED;
+			         }
+				}
+		         else if (localData.currentPlayer == CheckersData.RED)
+	        	 		  playerMoveNext = CheckersData.BLACK;
 		              else
 		            	  playerMoveNext = CheckersData.RED;
-		         }
+				localData.currentPlayer = playerMoveNext;
+				moveScores.add(new CheckersMoveScore(null,scores[i],moves[i],localData,playerMove,playerMoveNext));
 			}
-	         else if (localData.currentPlayer == CheckersData.RED)
-        	 		  playerMoveNext = CheckersData.BLACK;
-	              else
-	            	  playerMoveNext = CheckersData.RED;
-			localData.currentPlayer = playerMoveNext;
-			moveScores.add(new CheckersMoveScore(null,scores[i],moves[i],localData,playerMove,playerMoveNext));
+			branchMoves = new ArrayList<ArrayList<CheckersMoveScore>>();
+			branchMoves.add(moveScores);			
 		}
-		for(int i = 0;i < depth;i++)
+		else
 		{
-			IncreaseDepth(moveScores,i);
+			ArrayList<ArrayList<CheckersMoveScore>> localBranchMoves = new ArrayList<ArrayList<CheckersMoveScore>>();
+			ArrayList<CheckersMoveScore> localDepthMoves1 = new ArrayList<CheckersMoveScore>();
+			
+			for(int i = 0; i < prevMove.moves.size();i++)
+			{
+				if(data.equals(prevMove.moves.get(i).board))
+				{
+					localDepthMoves1 = prevMove.moves.get(i).moves;
+					break;
+				}
+			}
+			if(localDepthMoves1.size() == 0)
+			{
+				branchMoves = null;
+				MakeAIMove();
+				return;
+			}
+			moveScores = localDepthMoves1;
+			localBranchMoves.add(localDepthMoves1);
+			while(localDepthMoves1 != null && localDepthMoves1.size() > 0)
+			{
+				ArrayList<CheckersMoveScore> localDepthMoves2 = new ArrayList<CheckersMoveScore>();
+				for(int j = 0;j < localDepthMoves1.size();j++)
+				{
+					CheckersMoveScore localMove = localDepthMoves1.get(j);
+					if(!localMove.goalState && localMove.moves != null)
+					{
+						for(int k = 0;k < localMove.moves.size();k++)
+						{
+							localDepthMoves2.add(localMove.moves.get(k));
+						}
+					}
+				}
+				if(localDepthMoves2 != null && localDepthMoves2.size() > 0)
+					localBranchMoves.add(localDepthMoves2);
+				localDepthMoves1 = localDepthMoves2;
+			}
+			branchMoves = new ArrayList<ArrayList<CheckersMoveScore>>();
+			branchMoves = localBranchMoves;
+		}
+		int branchSize = branchMoves.size();
+		System.out.println(branchSize);
+		int localDepth = depth - branchSize;
+		for(int i = 0;i < localDepth;i++)
+		{
+			long startTime = System.currentTimeMillis();
+			IncreaseDepth(branchMoves);			
+			long endTime = System.currentTimeMillis();
+			System.out.println("Add Moves: " + (endTime - startTime));
+			ArrayList<CheckersMoveScore> localDepthMoves = new ArrayList<CheckersMoveScore>();
+			for(int j = 0;j < branchMoves.get(branchMoves.size()-1).size();j++)
+			{
+				CheckersMoveScore localMove = branchMoves.get(branchMoves.size()-1).get(j);
+				if(!localMove.goalState)
+				{
+					for(int k = 0;k < localMove.moves.size();k++)
+					{
+						localDepthMoves.add(localMove.moves.get(k));
+					}
+				}
+			}
+			if(localDepthMoves != null && localDepthMoves.size() >  0)
+				branchMoves.add(localDepthMoves);
 		}
 		int bestMoveIndex = 0;
 		for(int i = 0;i < moveScores.size();i++)
@@ -194,40 +262,20 @@ public class AI
 			}
 		}
 		data.canvas.doMakeMove(moveScores.get(bestMoveIndex).move);
+		prevMove = moveScores.get(bestMoveIndex);
 	}
 	
-	private void IncreaseDepth(ArrayList<CheckersMoveScore> moveScores,int maxDepth)
+	private void IncreaseDepth(ArrayList<ArrayList<CheckersMoveScore>> branchMoves)
 	{		
-		//Add each new move to be added
-		//Store each move by reference
-		//Entry is move at first index depth
-		ArrayList<ArrayList<CheckersMoveScore>> branchMoves = new ArrayList<ArrayList<CheckersMoveScore>>();
-		branchMoves.add(moveScores);
-		for(int i = 0;i < maxDepth;i++)
-		{
-			ArrayList<CheckersMoveScore> localDepthMoves = new ArrayList<CheckersMoveScore>();
-			for(int j = 0;j < branchMoves.get(i).size();j++)
-			{
-				CheckersMoveScore localMove = branchMoves.get(i).get(j);
-				if(!localMove.goalState)
-				{
-					for(int k = 0;k < localMove.moves.size();k++)
-					{
-						localDepthMoves.add(localMove.moves.get(k));
-					}
-				}
-			}
-			branchMoves.add(localDepthMoves);
-		}
-		
 		//Calculate scores for each move in new depth
-		for(int i = 0;i < branchMoves.get(maxDepth).size();i++)
+		//Thread[] depthIncThreads = new Thread[branchMoves.get(maxDepth).size()];
+		for(int i = 0;i < branchMoves.get(branchMoves.size()-1).size();i++)
 		{
-			CheckersData localData = new CheckersData(branchMoves.get(maxDepth).get(i).board);
-			CheckersData localDataTemp = new CheckersData(branchMoves.get(maxDepth).get(i).board);
+			CheckersData localData = new CheckersData(branchMoves.get(branchMoves.size()-1).get(i).board);
+			CheckersData localDataTemp = new CheckersData(branchMoves.get(branchMoves.size()-1).get(i).board);
 			ArrayList<CheckersMoveScore> localMoveScores = new ArrayList<CheckersMoveScore>();
 			CheckersMove[] moves = localData.getLegalMoves(localData.currentPlayer);
-			if(!branchMoves.get(maxDepth).get(i).goalState)
+			if(!branchMoves.get(branchMoves.size()-1).get(i).goalState)
 			{
 				for(int j = 0;j < moves.length;j++)
 				{
@@ -236,8 +284,6 @@ public class AI
 					byte playerMoveNext = localData.currentPlayer;
 					localData.makeMove(moves[j]);
 					float score = ScoreBoard(localData);
-					if(score > 0)
-						System.out.println("Scoreboard: " + score);
 					if (moves[j].isJump()) 
 					{
 						CheckersMove[] localCheckersMove = localData.getLegalJumpsFrom(localData.currentPlayer,moves[j].toRow,moves[j].toCol);
@@ -254,20 +300,21 @@ public class AI
 			              else
 			            	  playerMoveNext = CheckersData.RED;
 					localData.currentPlayer = playerMoveNext;
-					localMoveScores.add(new CheckersMoveScore(branchMoves.get(maxDepth).get(i),score,moves[j],localData,playerMove,playerMoveNext));
+					localMoveScores.add(new CheckersMoveScore(branchMoves.get(branchMoves.size()-1).get(i),score,moves[j],localData,playerMove,playerMoveNext));
 				}	
-				branchMoves.get(maxDepth).get(i).IncreaseDepth(localMoveScores);
-			}
+				branchMoves.get(branchMoves.size()-1).get(i).IncreaseDepth(localMoveScores);
+
+			}; 
 		}
-		
+
 		//Update scores back through each CheckersMove
-		for(int i = maxDepth;i >= 0;i--)
+		for(int i = branchMoves.size()-1;i >= 0;i--)
 		{
 			for(int k = 0;k < branchMoves.get(i).size();k++)
 			{
 				CheckersMoveScore localMove = branchMoves.get(i).get(k);
 				int scoreIndex = 0;
-				if(!localMove.goalState)
+				if(localMove.moves != null && !localMove.goalState)
 				{
 					for(int j = 0;j < localMove.moves.size();j++)
 					{
@@ -287,6 +334,15 @@ public class AI
 						}
 					}
 					localMove.UpdateScore(branchMoves.get(i).get(k).moves.get(scoreIndex).score);
+				}
+			}
+			if(branchMoves.get(i).size() > 50 && i > 6)
+			{
+				int reducedSize = (int)(branchMoves.get(i).size()*.35);
+				Collections.sort(branchMoves.get(i));
+				while(branchMoves.get(i).size() > reducedSize)
+				{
+					branchMoves.get(i).remove(0);
 				}
 			}
 		}
