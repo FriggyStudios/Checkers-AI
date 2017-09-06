@@ -5,14 +5,12 @@ public class CheckersMoveScore implements Comparable<CheckersMoveScore>
 	byte playerMove;
 	byte playerNextMove;
 	float score;
-	CheckersMoveScore moveAbove;
 	CheckersMove move;
 	CheckersData board;
 	ArrayList<CheckersMoveScore> moves;
 	boolean goalState = false;
-	CheckersMoveScore(CheckersMoveScore moveAbove,float score,CheckersMove move,CheckersData board,byte playerMove,byte playerNextMove)
+	CheckersMoveScore(float score,CheckersMove move,CheckersData board,byte playerMove,byte playerNextMove)
 	{
-		this.moveAbove = moveAbove;
 		this.playerMove = playerMove;
 		this.playerNextMove = playerNextMove;
 		this.score = score;
@@ -24,7 +22,7 @@ public class CheckersMoveScore implements Comparable<CheckersMoveScore>
 		{
 			for(int j = 0;j < 8;j++)
 			{
-				if(board.board[i][j] == CheckersData.RED)
+				if(board.board.Get(i, j) == CheckersData.RED)
 				{
 					RedPieces++;
 					if(BlackPieces != 0)
@@ -32,7 +30,7 @@ public class CheckersMoveScore implements Comparable<CheckersMoveScore>
 						break;
 					}
 				}
-				else if(board.board[i][j] == CheckersData.BLACK)
+				else if(board.board.Get(i, j) == CheckersData.BLACK)
 				{
 					BlackPieces++;
 					if(RedPieces != 0)

@@ -12,15 +12,17 @@ public class AI
 	//RedPieces,-BlackPieces,RedKingPieces,-BlackKingPieces,RedHoppingOpportunities,-BlackHoppingOpportunities,RedCenters,-BlackCenters
 	static ArrayList<Float> polynomialCoefficients;
 	CheckersData data;
-	int depth = 8;
+	int depth = 7;
 	ArrayList<ArrayList<CheckersMoveScore>> branchMoves;
 	CheckersMoveScore prevMove;
+	int branchSizeAvg = 0;
+	int branches = 0;
 	
-	@SuppressWarnings("unchecked")
+	//@SuppressWarnings("unchecked")
 	public AI(CheckersData data)
 	{		
 		this.data = data;
-		try
+		/*try
 		{
 			FileInputStream fileStream = new FileInputStream("coeff.dat");
 		
@@ -33,19 +35,19 @@ public class AI
 		}
 		//Catch Input errors
 		catch(Exception e)
-		{
-			e.printStackTrace();
+		{*/
+			//e.printStackTrace();
 			polynomialCoefficients = new ArrayList<Float>();
 			polynomialCoefficients.add(.1f);
 			polynomialCoefficients.add(.1f);
-			polynomialCoefficients.add(.15f);
-			polynomialCoefficients.add(.15f);
+			polynomialCoefficients.add(.13f);
+			polynomialCoefficients.add(.13f);
 			polynomialCoefficients.add(.0f);
 			polynomialCoefficients.add(.0f);
 			polynomialCoefficients.add(.0f);
 			polynomialCoefficients.add(.0f);
-			WriteCoeff();
-		}
+			//WriteCoeff();
+		//}
 	}
 	//Favourability board position for player red
 	//Returns float from low(bad for red) to high(good for red)
@@ -61,7 +63,7 @@ public class AI
 		{
 			for(int j = 0;j < 8;j++)
 			{
-				if(dataLocal.board[i][j] == CheckersData.RED)
+				if(dataLocal.board.Get(i, j) == CheckersData.RED)
 				{
 					RedPieces++;
 					/*if(( i == 2 || i == 4) && j == 4)
@@ -77,7 +79,7 @@ public class AI
 						RedHoppingOpportunities++;
 					}*/
 				}
-				else if(dataLocal.board[i][j] == CheckersData.BLACK)
+				else if(dataLocal.board.Get(i, j) == CheckersData.BLACK)
 				{
 					BlackPieces++;
 					/*if(( i == 3 || i == 5) && j == 3)
@@ -93,7 +95,7 @@ public class AI
 						BlackHoppingOpportunities++;
 					}*/
 				}
-				else if(dataLocal.board[i][j] == CheckersData.RED_KING)
+				else if(dataLocal.board.Get(i, j) == CheckersData.RED_KING)
 				{
 					RedKingPieces++;
 					/*if(( i == 2 || i == 4) && j == 4)
@@ -117,7 +119,7 @@ public class AI
 						RedHoppingOpportunities++;
 					}*/
 				}
-				else if(dataLocal.board[i][j] == CheckersData.BLACK_KING)
+				else if(dataLocal.board.Get(i, j) == CheckersData.BLACK_KING)
 				{
 					BlackKingPieces++;
 					/*if(( i == 3 || i == 5) && j == 3)
@@ -182,7 +184,7 @@ public class AI
 		              else
 		            	  playerMoveNext = CheckersData.RED;
 				localData.currentPlayer = playerMoveNext;
-				moveScores.add(new CheckersMoveScore(null,scores[i],moves[i],localData,playerMove,playerMoveNext));
+				moveScores.add(new CheckersMoveScore(scores[i],moves[i],localData,playerMove,playerMoveNext));
 			}
 			branchMoves = new ArrayList<ArrayList<CheckersMoveScore>>();
 			branchMoves.add(moveScores);			
@@ -191,18 +193,46 @@ public class AI
 		{
 			ArrayList<ArrayList<CheckersMoveScore>> localBranchMoves = new ArrayList<ArrayList<CheckersMoveScore>>();
 			ArrayList<CheckersMoveScore> localDepthMoves1 = new ArrayList<CheckersMoveScore>();
-			
-			for(int i = 0; i < prevMove.moves.size();i++)
+			ArrayList<CheckersMoveScore> localDepthMoves3 = new ArrayList<CheckersMoveScore>();
+			ArrayList<ArrayList<CheckersMoveScore>> oldMoves = new ArrayList<ArrayList<CheckersMoveScore>>();
+			if(prevMove.moves == null)
 			{
-				if(data.equals(prevMove.moves.get(i).board))
+				System.out.println("prevMove moves is null");
+				branchMoves = null;
+				MakeAIMove();
+				return;
+			}
+			oldMoves.add(prevMove.moves);
+			boolean boardFound = false;
+			int depthBoardFind = 5;
+			for(int j = 0; j < depthBoardFind;j++)
+			{
+				localDepthMoves3 = new ArrayList<CheckersMoveScore>();
+				for(int i = 0; i < oldMoves.get(j).size();i++)
 				{
-					localDepthMoves1 = prevMove.moves.get(i).moves;
-					break;
+					if(data.equals(oldMoves.get(j).get(i).board))
+					{
+						localDepthMoves1 = oldMoves.get(j).get(i).moves;
+						if(localDepthMoves1.size() == 1)
+						{
+							data.canvas.doMakeMove(localDepthMoves1.get(0).move);
+							prevMove = localDepthMoves1.get(0);
+							return;
+						}
+						boardFound = true;
+						break;
+					}
+					if(oldMoves.get(j).get(i).moves != null)
+						localDepthMoves3.addAll(oldMoves.get(j).get(i).moves);
 				}
+				if(boardFound || localDepthMoves3 == null || localDepthMoves3.size() == 0)
+					break;
+				oldMoves.add(localDepthMoves3);
 			}
 			if(localDepthMoves1.size() == 0)
 			{
 				branchMoves = null;
+				System.out.println("Board not found on prev moves");
 				MakeAIMove();
 				return;
 			}
@@ -230,7 +260,6 @@ public class AI
 			branchMoves = localBranchMoves;
 		}
 		int branchSize = branchMoves.size();
-		System.out.println(branchSize);
 		int localDepth = depth - branchSize;
 		for(int i = 0;i < localDepth;i++)
 		{
@@ -252,6 +281,14 @@ public class AI
 			}
 			if(localDepthMoves != null && localDepthMoves.size() >  0)
 				branchMoves.add(localDepthMoves);
+			//System.out.println("Branch size: " + branchMoves.get(branchMoves.size()-1).size());
+			if(i == localDepth-1)
+			{
+				branchSizeAvg = (branchSizeAvg*branches+branchMoves.get(branchMoves.size()-1).size());
+				branches++;
+				branchSizeAvg/= branches;
+				System.out.println(branchSizeAvg);
+			}
 		}
 		int bestMoveIndex = 0;
 		for(int i = 0;i < moveScores.size();i++)
@@ -300,7 +337,7 @@ public class AI
 			              else
 			            	  playerMoveNext = CheckersData.RED;
 					localData.currentPlayer = playerMoveNext;
-					localMoveScores.add(new CheckersMoveScore(branchMoves.get(branchMoves.size()-1).get(i),score,moves[j],localData,playerMove,playerMoveNext));
+					localMoveScores.add(new CheckersMoveScore(score,moves[j],localData,playerMove,playerMoveNext));
 				}	
 				branchMoves.get(branchMoves.size()-1).get(i).IncreaseDepth(localMoveScores);
 
@@ -334,15 +371,6 @@ public class AI
 						}
 					}
 					localMove.UpdateScore(branchMoves.get(i).get(k).moves.get(scoreIndex).score);
-				}
-			}
-			if(branchMoves.get(i).size() > 50 && i > 6)
-			{
-				int reducedSize = (int)(branchMoves.get(i).size()*.35);
-				Collections.sort(branchMoves.get(i));
-				while(branchMoves.get(i).size() > reducedSize)
-				{
-					branchMoves.get(i).remove(0);
 				}
 			}
 		}

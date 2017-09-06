@@ -301,9 +301,12 @@ class CheckersCanvas extends Canvas implements ActionListener, MouseListener {
         // The paint method completely redraws the canvas, so don't erase
         // before calling paint().
       paint(g);
-      while(board.currentPlayer == CheckersData.RED)
+      if(gameInProgress)
       {
-    	  board.ai.MakeAIMove();
+	      while(board.currentPlayer == CheckersData.RED)
+	      {
+	    	  board.ai.MakeAIMove();
+	      }
       }
    }
    
@@ -471,7 +474,7 @@ class CheckersData {
              BLACK = 3,
              BLACK_KING = 4;
 
-   byte[][] board;  // board[r][c] is the contents of row r, column c.  
+   Board board; 
 
    byte currentPlayer;      // Whose turn is it now?  The possible values
                            //    are CheckersData.RED and CheckersData.BLACK.
@@ -481,7 +484,7 @@ class CheckersData {
 
    public CheckersData(CheckersCanvas canvas) {
          // Constructor.  Create the board and set it up for a new game.
-      board = new byte[8][8];
+	  board = new Board();
 	  if(canvas != null)
 	  {
 	    this.canvas = canvas;
@@ -491,14 +494,9 @@ class CheckersData {
    
    public CheckersData(CheckersData data) 
    {
-	  board = new byte[8][8];
+	  board = new Board(data.board);
 	  this.currentPlayer = data.currentPlayer;
 	  this.legalMoves = data.legalMoves;
-	  for (int row = 0; row < 8; row++) {
-	      for (int col = 0; col < 8; col++) {
-	    	 board[row][col] = data.board[row][col]; 
-	      }
-	  }
    }
    
 @Override
@@ -520,7 +518,7 @@ public boolean equals(Object o)
     }
 	for (int row = 0; row < 8; row++) {
 	      for (int col = 0; col < 8; col++) {
-	    	 if(board[row][col] != data.board[row][col])
+	    	 if(board.Get(row,col) != data.board.Get(row,col))
 	    	 {
 	    		 return false;
 	    	 }
@@ -539,14 +537,9 @@ public void setUpGame() {
          for (int col = 0; col < 8; col++) {
             if ( row % 2 == col % 2 ) {
                if (row < 3)
-                  board[row][col] = BLACK;
+            	   board.Add(BLACK,row,col);
                else if (row > 4)
-                  board[row][col] = RED;
-               else
-                  board[row][col] = EMPTY;
-            }
-            else {
-               board[row][col] = EMPTY;
+            	   board.Add(RED,row,col);
             }
          }
       }
@@ -556,9 +549,9 @@ public void setUpGame() {
    }  // end setUpGame()
    
 
-   public int pieceAt(int row, int col) {
+   public byte pieceAt(int row, int col) {
           // Return the contents of the square in the specified row and column.
-       return board[row][col];
+       return board.Get(row,col);
    }
    
 
@@ -566,7 +559,7 @@ public void setUpGame() {
           // Set the contents of the square in the specified row and column.
           // piece must be one of the constants EMPTY, RED, BLACK, RED_KING,
           // BLACK_KING.
-       board[row][col] = piece;
+	   board.Add(piece,row,col);
    }
    
 
@@ -583,18 +576,18 @@ public void setUpGame() {
          // jumped piece is removed from the board.  If a piece moves
          // the last row on the opponent's side of the board, the 
          // piece becomes a king.
-      board[toRow][toCol] = board[fromRow][fromCol];
-      board[fromRow][fromCol] = EMPTY;
+      board.Add(board.Get(fromRow, fromCol),toRow, toCol);
+      board.Add(EMPTY, fromRow, fromCol);
       if (fromRow - toRow == 2 || fromRow - toRow == -2) {
             // The move is a jump.  Remove the jumped piece from the board.
          int jumpRow = (fromRow + toRow) / 2;  // Row of the jumped piece.
          int jumpCol = (fromCol + toCol) / 2;  // Column of the jumped piece.
-         board[jumpRow][jumpCol] = EMPTY;
+         board.Add(EMPTY, jumpRow, jumpCol);
       }
-      if (toRow == 0 && board[toRow][toCol] == RED)
-         board[toRow][toCol] = RED_KING;
-      if (toRow == 7 && board[toRow][toCol] == BLACK)
-         board[toRow][toCol] = BLACK_KING;
+      if (toRow == 0 && board.Get(toRow, toCol) == RED)
+         board.Add(RED_KING, toRow, toCol);
+      if (toRow == 7 && board.Get(toRow, toCol) == BLACK)
+    	  board.Add(BLACK_KING, toRow, toCol);
       
    }
    
@@ -624,9 +617,9 @@ public void setUpGame() {
           jump in each of the four directions from that square.  If there is 
           a legal jump in that direction, put it in the moves vector.
       */
-      for (byte row = 0; row < 8; row++) {
-         for (byte col = 0; col < 8; col++) {
-            if (board[row][col] == player || board[row][col] == playerKing) {
+      for (byte row = 0; row < 8; row+=2) {
+         for (byte col = 0; col < 8; col+=2) {
+            if (board.Get(row, col) == player || board.Get(row, col) == playerKing) {
                if (canJump(player, row, col, row+1, col+1, row+2, col+2))
                   moves.addElement(new CheckersMove(row, col, row+2, col+2));
                if (canJump(player, row, col, row-1, col+1, row-2, col+2))
@@ -637,7 +630,20 @@ public void setUpGame() {
                   moves.addElement(new CheckersMove(row, col, row-2, col-2));
             }
          }
-      }
+      }for (byte row = 1; row < 8; row+=2) {
+          for (byte col = 1; col < 8; col+=2) {
+              if (board.Get(row, col) == player || board.Get(row, col) == playerKing) {
+                 if (canJump(player, row, col, row+1, col+1, row+2, col+2))
+                    moves.addElement(new CheckersMove(row, col, row+2, col+2));
+                 if (canJump(player, row, col, row-1, col+1, row-2, col+2))
+                    moves.addElement(new CheckersMove(row, col, row-2, col+2));
+                 if (canJump(player, row, col, row+1, col-1, row+2, col-2))
+                    moves.addElement(new CheckersMove(row, col, row+2, col-2));
+                 if (canJump(player, row, col, row-1, col-1, row-2, col-2))
+                    moves.addElement(new CheckersMove(row, col, row-2, col-2));
+              }
+           }
+        }
       
       /*  If any jump moves were found, then the user must jump, so we don't 
           add any regular moves.  However, if no jumps were found, check for
@@ -648,9 +654,9 @@ public void setUpGame() {
       */
       
       if (moves.size() == 0) {
-         for (int row = 0; row < 8; row++) {
-            for (int col = 0; col < 8; col++) {
-               if (board[row][col] == player || board[row][col] == playerKing) {
+         for (int row = 0; row < 8; row+=2) {
+            for (int col = 0; col < 8; col+=2) {
+               if (board.Get(row, col) == player || board.Get(row, col) == playerKing) {
                   if (canMove(player,row,col,row+1,col+1))
                      moves.addElement(new CheckersMove(row,col,row+1,col+1));
                   if (canMove(player,row,col,row-1,col+1))
@@ -661,7 +667,20 @@ public void setUpGame() {
                      moves.addElement(new CheckersMove(row,col,row-1,col-1));
                }
             }
-         }
+         }for (int row = 1; row < 8; row+=2) {
+             for (int col = 1; col < 8; col+=2) {
+                 if (board.Get(row, col) == player || board.Get(row, col) == playerKing) {
+                    if (canMove(player,row,col,row+1,col+1))
+                       moves.addElement(new CheckersMove(row,col,row+1,col+1));
+                    if (canMove(player,row,col,row-1,col+1))
+                       moves.addElement(new CheckersMove(row,col,row-1,col+1));
+                    if (canMove(player,row,col,row+1,col-1))
+                       moves.addElement(new CheckersMove(row,col,row+1,col-1));
+                    if (canMove(player,row,col,row-1,col-1))
+                       moves.addElement(new CheckersMove(row,col,row-1,col-1));
+                 }
+              }
+           }
       }
       
       /* If no legal moves have been found, return null.  Otherwise, create
@@ -693,7 +712,7 @@ public void setUpGame() {
       else
          playerKing = BLACK_KING;
       Vector<CheckersMove> moves = new Vector<CheckersMove>();  // The legal jumps will be stored in this vector.
-      if (board[row][col] == player || board[row][col] == playerKing) {
+      if (board.Get(row, col) == player || board.Get(row, col) == playerKing) {
          if (canJump(player, row, col, row+1, col+1, row+2, col+2))
             moves.addElement(new CheckersMove(row, col, row+2, col+2));
          if (canJump(player, row, col, row-1, col+1, row-2, col+2))
@@ -724,20 +743,20 @@ public void setUpGame() {
       if (r3 < 0 || r3 >= 8 || c3 < 0 || c3 >= 8)
          return false;  // (r3,c3) is off the board.
          
-      if (board[r3][c3] != EMPTY)
+      if (board.Get(r3, c3) != EMPTY)
          return false;  // (r3,c3) already contains a piece.
          
       if (player == RED) {
-         if (board[r1][c1] == RED && r3 > r1)
+         if (board.Get(r1, c1) == RED && r3 > r1)
             return false;  // Regular red piece can only move  up.
-         if (board[r2][c2] != BLACK && board[r2][c2] != BLACK_KING)
+         if (board.Get(r2,c2) != BLACK && board.Get(r2,c2) != BLACK_KING)
             return false;  // There is no black piece to jump.
          return true;  // The jump is legal.
       }
       else {
-         if (board[r1][c1] == BLACK && r3 < r1)
-            return false;  // Regular black piece can only move downn.
-         if (board[r2][c2] != RED && board[r2][c2] != RED_KING)
+         if (board.Get(r1,c1) == BLACK && r3 < r1)
+            return false;  // Regular black piece can only move down.
+         if (board.Get(r2,c2) != RED && board.Get(r2,c2) != RED_KING)
             return false;  // There is no red piece to jump.
          return true;  // The jump is legal.
       }
@@ -754,16 +773,16 @@ public void setUpGame() {
       if (r2 < 0 || r2 >= 8 || c2 < 0 || c2 >= 8)
          return false;  // (r2,c2) is off the board.
          
-      if (board[r2][c2] != EMPTY)
+      if (board.Get(r2,c2) != EMPTY)
          return false;  // (r2,c2) already contains a piece.
 
       if (player == RED) {
-         if (board[r1][c1] == RED && r2 > r1)
+         if (board.Get(r1,c1) == RED && r2 > r1)
              return false;  // Regualr red piece can only move down.
           return true;  // The move is legal.
       }
       else {
-         if (board[r1][c1] == BLACK && r2 < r1)
+         if (board.Get(r1,c1) == BLACK && r2 < r1)
              return false;  // Regular black piece can only move up.
           return true;  // The move is legal.
       }
