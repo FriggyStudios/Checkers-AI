@@ -24,7 +24,7 @@ public class Board
    
    public byte Get(int x, int y)
    {
-	   if(x%2 == y%2)
+	   if(x%2 != y%2)
 		   if(x%2 == 0)
 			   return entries.get((x/2)+(y*4));
 		   else
@@ -35,7 +35,7 @@ public class Board
    
    public void Add(byte entry,int x, int y)
    {	   
-	   if(x%2 == y%2)
+	   if(x%2 != y%2)
 		   if(x%2 == 0)
 		   {
 			   entries.remove((x/2)+(y*4));

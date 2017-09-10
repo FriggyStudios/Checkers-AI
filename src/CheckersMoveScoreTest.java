@@ -13,14 +13,12 @@ public class CheckersMoveScoreTest
 	private CheckersMoveScore move2;
 	ArrayList<CheckersMoveScore> moves = new ArrayList<CheckersMoveScore>();
 	private float score = 2;
-	byte playerMove = CheckersData.RED;
-	byte playerNextMove = CheckersData.BLACK;
 
 	@Before
  	public void setUp()
 	{
-		move = new CheckersMoveScore(null,score,new CheckersMove(0,0,1,1),new CheckersData((CheckersCanvas)null),playerMove,playerNextMove);
-		move2 = new CheckersMoveScore(null,score-1,new CheckersMove(0,0,1,1),new CheckersData((CheckersCanvas)null),playerMove,playerNextMove);
+		move = new CheckersMoveScore(score,new CheckersMove(0,0,1,1),new CheckersData((CheckersCanvas)null),CheckersData.RED,CheckersData.BLACK);
+		move2 = new CheckersMoveScore(score-1,new CheckersMove(0,0,1,1),new CheckersData((CheckersCanvas)null),CheckersData.BLACK,CheckersData.RED);
 		
 		moves.add(move);
 		moves.add(move);

@@ -67,7 +67,16 @@ public class CheckersMoveScore implements Comparable<CheckersMoveScore>
 	}
 	public int compareTo(CheckersMoveScore other)
 	{
-		return (int)((score-other.score)*10000);
+		if(playerMove == other.playerMove)
+			if(playerMove == CheckersData.RED)
+				return (int)((score-other.score)*10000);
+			else
+				return (int)((other.score-score)*10000);
+		else
+			if(playerMove == CheckersData.RED)
+				return -1000000000;
+			else
+				return 1000000000;
 	}
 }
 

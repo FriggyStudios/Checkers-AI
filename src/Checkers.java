@@ -535,7 +535,7 @@ public void setUpGame() {
           // and all such squares in the last three rows contain red squares.
       for (int row = 0; row < 8; row++) {
          for (int col = 0; col < 8; col++) {
-            if ( row % 2 == col % 2 ) {
+            if ( row % 2 != col % 2 ) {
                if (row < 3)
             	   board.Add(BLACK,row,col);
                else if (row > 4)
@@ -617,7 +617,7 @@ public void setUpGame() {
           jump in each of the four directions from that square.  If there is 
           a legal jump in that direction, put it in the moves vector.
       */
-      for (byte row = 0; row < 8; row+=2) {
+      for (byte row = 1; row < 8; row+=2) {
          for (byte col = 0; col < 8; col+=2) {
             if (board.Get(row, col) == player || board.Get(row, col) == playerKing) {
                if (canJump(player, row, col, row+1, col+1, row+2, col+2))
@@ -630,7 +630,7 @@ public void setUpGame() {
                   moves.addElement(new CheckersMove(row, col, row-2, col-2));
             }
          }
-      }for (byte row = 1; row < 8; row+=2) {
+      }for (byte row = 0; row < 8; row+=2) {
           for (byte col = 1; col < 8; col+=2) {
               if (board.Get(row, col) == player || board.Get(row, col) == playerKing) {
                  if (canJump(player, row, col, row+1, col+1, row+2, col+2))
@@ -654,7 +654,7 @@ public void setUpGame() {
       */
       
       if (moves.size() == 0) {
-         for (int row = 0; row < 8; row+=2) {
+         for (int row = 1; row < 8; row+=2) {
             for (int col = 0; col < 8; col+=2) {
                if (board.Get(row, col) == player || board.Get(row, col) == playerKing) {
                   if (canMove(player,row,col,row+1,col+1))
@@ -667,7 +667,7 @@ public void setUpGame() {
                      moves.addElement(new CheckersMove(row,col,row-1,col-1));
                }
             }
-         }for (int row = 1; row < 8; row+=2) {
+         }for (int row = 0; row < 8; row+=2) {
              for (int col = 1; col < 8; col+=2) {
                  if (board.Get(row, col) == player || board.Get(row, col) == playerKing) {
                     if (canMove(player,row,col,row+1,col+1))
