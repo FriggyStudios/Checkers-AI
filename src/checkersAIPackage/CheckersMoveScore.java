@@ -1,3 +1,4 @@
+package checkersAIPackage;
 import java.util.ArrayList;
 
 public class CheckersMoveScore implements Comparable<CheckersMoveScore>
@@ -8,6 +9,7 @@ public class CheckersMoveScore implements Comparable<CheckersMoveScore>
 	CheckersMove move;
 	CheckersData board;
 	ArrayList<CheckersMoveScore> moves;
+	//goalState true if board after move played is an end game board
 	boolean goalState = false;
 	CheckersMoveScore(float score,CheckersMove move,CheckersData board,byte playerMove,byte playerNextMove)
 	{
@@ -17,10 +19,11 @@ public class CheckersMoveScore implements Comparable<CheckersMoveScore>
 		this.move = new CheckersMove(move);
 		this.board = new CheckersData(board);
 		
+		//Count black and red pieces
 		int RedPieces=0; int BlackPieces = 0;
-		for(int i = 0;i < 8;i++)
+		for(int i = 1;i < 8;i+=2)
 		{
-			for(int j = 0;j < 8;j++)
+			for(int j = 0;j < 8;j+=2)
 			{
 				if(board.board.Get(i, j) == CheckersData.RED)
 				{
@@ -44,10 +47,38 @@ public class CheckersMoveScore implements Comparable<CheckersMoveScore>
 				break;
 			}
 		}
+		for(int i = 0;i < 8;i+=2)
+		{
+			for(int j = 1;j < 8;j+=2)
+			{
+				if(board.board.Get(i, j) == CheckersData.RED)
+				{
+					RedPieces++;
+					if(BlackPieces != 0)
+					{
+						break;
+					}
+				}
+				else if(board.board.Get(i, j) == CheckersData.BLACK)
+				{
+					BlackPieces++;
+					if(RedPieces != 0)
+					{
+						break;
+					}
+				}
+			}
+			if(RedPieces != 0 && BlackPieces != 0)
+			{
+				break;
+			}
+		}
+		//Check if one player has no pieces
 		if(RedPieces == 0 && BlackPieces == 0)
 		{
 			goalState = true;
 		}
+		//Check if player to move has no moves
 		else
 		{
 			CheckersMove[] moves = board.getLegalMoves(playerNextMove);
@@ -67,16 +98,7 @@ public class CheckersMoveScore implements Comparable<CheckersMoveScore>
 	}
 	public int compareTo(CheckersMoveScore other)
 	{
-		if(playerMove == other.playerMove)
-			if(playerMove == CheckersData.RED)
-				return (int)((score-other.score)*10000);
-			else
-				return (int)((other.score-score)*10000);
-		else
-			if(playerMove == CheckersData.RED)
-				return -1000000000;
-			else
-				return 1000000000;
+		return (int)((score-other.score)*10000);
 	}
 }
 

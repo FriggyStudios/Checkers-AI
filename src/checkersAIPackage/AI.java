@@ -1,3 +1,5 @@
+package checkersAIPackage;
+
 import java.util.ArrayList;
 import java.util.Collections;
 
@@ -13,7 +15,7 @@ public class AI
 	//Max time allowed in IncreaseDepth
 	int timePerIncreaseDepth = 25000;
 	//Max size of list in branchMoves
-	float maxBranchSize = 350000;
+	float maxBranchSize = 300000;
 	
 	public AI(CheckersData data)
 	{		
@@ -28,7 +30,7 @@ public class AI
 	
 	//Favourability board position for player red
 	//Returns float from low(bad for red) to high(good for red)
-	static float ScoreBoard(CheckersData dataLocal)
+	static float scoreBoard(CheckersData dataLocal)
 	{
 		int RedPieces=0; int BlackPieces = 0;
 		int RedKingPieces = 0; int BlackKingPieces = 0;
@@ -86,7 +88,7 @@ public class AI
 	
 	//Calculates score of board as far as depth moves ahead
 	//Makes move based on scores updated back from score of boards of furthest depth
-	public void MakeAIMove()
+	public void makeAIMove()
 	{	
 		CheckersMove[] moves = data.getLegalMoves(CheckersData.RED);
 		float[] scores = new float[moves.length];
@@ -103,7 +105,7 @@ public class AI
 				byte playerMoveNext = localData.currentPlayer;
 				
 				localData.makeMove(moves[i]);
-				scores[i] = ScoreBoard(localData);
+				scores[i] = scoreBoard(localData);
 				if (moves[i].isJump())
 				{
 					CheckersMove[] localCheckersMove = localData.getLegalJumpsFrom(localData.currentPlayer,moves[i].toRow,moves[i].toCol);
@@ -137,7 +139,7 @@ public class AI
 			{
 				System.out.println("prevMove moves is null");
 				branchMoves = null;
-				MakeAIMove();
+				makeAIMove();
 				return;
 			}
 			oldMoves.add(prevMove.moves);
@@ -157,7 +159,7 @@ public class AI
 						{
 							branchMoves = null;
 							System.out.println("moves of prevMove null");
-							MakeAIMove();
+							makeAIMove();
 							return;
 						}
 						if(localDepthMoves1.size() == 1)
@@ -182,7 +184,7 @@ public class AI
 			{
 				branchMoves = null;
 				System.out.println("Board not found on prev moves");
-				MakeAIMove();
+				makeAIMove();
 				return;
 			}
 			moveScores = localDepthMoves1;
@@ -216,12 +218,13 @@ public class AI
 		for(int i = 0;i < localDepth;i++)
 		{
 			//If time limit reached stop adding branches to brancMoves
-			if(!IncreaseDepth(branchMoves))
+			if(!increaseDepth())
 			{
 				break;
 			}
 			//Remove poor moves from branch
 			//Sorted by score from low to high
+			//Removes low scores for Red moves, high scores for Black moves
 			Collections.sort(branchMoves.get(branchMoves.size()-1));
 			while(branchMoves.get(branchMoves.size()-1).size() > maxBranchSize)
 			{
@@ -268,7 +271,7 @@ public class AI
 	//Calculate moves for last list of branchMoves' last list
 	//Updates scores back through branchMoves
 	//Return true if time limit timePerIncreaseDepth not reached, false otherwise
-	private boolean IncreaseDepth(ArrayList<ArrayList<CheckersMoveScore>> branchMoves)
+	boolean increaseDepth()
 	{		
 		//Calculate scores for each move in new depth
 		//Thread[] depthIncThreads = new Thread[branchMoves.get(maxDepth).size()];
@@ -287,7 +290,7 @@ public class AI
 					byte playerMove = localData.currentPlayer;
 					byte playerMoveNext = localData.currentPlayer;
 					localData.makeMove(moves[j]);
-					float score = ScoreBoard(localData);
+					float score = scoreBoard(localData);
 					if (moves[j].isJump()) 
 					{
 						CheckersMove[] localCheckersMove = localData.getLegalJumpsFrom(localData.currentPlayer,moves[j].toRow,moves[j].toCol);

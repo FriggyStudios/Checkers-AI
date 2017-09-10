@@ -1,18 +1,22 @@
+/*
+   Checkers Applet acquired from http://math.hws.edu/eck/cs124/javanotes3/source/Checkers.java
+   Applet used as base to develop Checkers AI.
+   */
 
 /*
    This applet lets two uses play checkers against each other.
    Red always starts the game.  If a player can jump an opponent's
-   piece, then the player must jump.  When a plyer can make no more
+   piece, then the player must jump.  When a player can make no more
    moves, the game ends.
    
    This file defines four classes: the main applet class, Checkers;
    CheckersCanvas, CheckersMove, and CheckersData.
    (This is not very good style; the other classes really should be
    nested classes inside the Checkers class.)
-   
-   Applet acquired from http://math.hws.edu/eck/cs124/javanotes3/source/Checkers.java
-   Applet used as base to develop Checkers AI.
+ 
 */
+package checkersAIPackage;
+
 
 import java.awt.*;
 import java.awt.event.*;
@@ -22,7 +26,12 @@ import java.util.Vector;
 
 public class Checkers extends Applet {
 
-   /* The main applet class only lays out the applet.  The work of
+   /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
+/* The main applet class only lays out the applet.  The work of
       the game is all done in the CheckersCanvas object.   Note that
       the Buttons and Label used in the applet are defined as 
       instance variables in the CheckersCanvas class.  The applet
@@ -68,7 +77,11 @@ public class Checkers extends Applet {
 
 class CheckersCanvas extends Canvas implements ActionListener, MouseListener {
 
-     // This canvas displays a 160-by-160 checkerboard pattern with
+     /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	// This canvas displays a 160-by-160 checkerboard pattern with
      // a 2-pixel black border.  It is assumed that the size of the
      // canvas is set to exactly 164-by-164 pixels.  This class does
      // the work of letting the users play checkers, and it displays
@@ -108,7 +121,7 @@ class CheckersCanvas extends Canvas implements ActionListener, MouseListener {
       message = new Label("",Label.CENTER);
       board = new CheckersData(this);
       doNewGame();
-      board.ai.MakeAIMove();
+      board.ai.makeAIMove();
    }
    
 
@@ -134,7 +147,7 @@ class CheckersCanvas extends Canvas implements ActionListener, MouseListener {
       board.currentPlayer = CheckersData.RED;   // RED moves first.
       board.legalMoves = board.getLegalMoves(CheckersData.RED);  // Get RED's legal moves.
       selectedRow = -1;   // RED has not yet selected a piece to move.
-      message.setText("Red:  Make your move.");
+      message.setText("Computer is making their move");
       gameInProgress = true;
       newGameButton.setEnabled(false);
       resignButton.setEnabled(true);
@@ -181,9 +194,9 @@ class CheckersCanvas extends Canvas implements ActionListener, MouseListener {
             selectedRow = row;
             selectedCol = col;
             if (board.currentPlayer == CheckersData.RED)
-               message.setText("RED:  Make your move.");
+               message.setText("Computer is making their move");
             else
-               message.setText("BLACK:  Make your move.");
+               message.setText("Make your move.");
             repaint();
             return;
          }
@@ -232,9 +245,9 @@ class CheckersCanvas extends Canvas implements ActionListener, MouseListener {
     	  board.legalMoves = board.getLegalJumpsFrom(board.currentPlayer,move.toRow,move.toCol);
          if (board.legalMoves != null) {
             if (board.currentPlayer == CheckersData.RED)
-               message.setText("RED:  You must continue jumping.");
+               message.setText("Computer is making their move");
             else
-               message.setText("BLACK:  You must continue jumping.");
+               message.setText("You must continue jumping.");
             selectedRow = move.toRow;  // Since only one piece can be moved, select it.
             selectedCol = move.toCol;
             repaint();
@@ -252,9 +265,9 @@ class CheckersCanvas extends Canvas implements ActionListener, MouseListener {
          if (board.legalMoves == null)
             gameOver("BLACK has no moves.  RED wins.");
          else if (board.legalMoves[0].isJump())
-            message.setText("BLACK:  Make your move.  You must jump.");
+            message.setText("Make your move.  You must jump.");
          else
-            message.setText("BLACK:  Make your move.");
+            message.setText("Make your move.");
       }
       else {
     	  board.currentPlayer = CheckersData.RED;
@@ -262,9 +275,9 @@ class CheckersCanvas extends Canvas implements ActionListener, MouseListener {
          if (board.legalMoves == null)
             gameOver("RED has no moves.  BLACK wins.");
          else if (board.legalMoves[0].isJump())
-            message.setText("RED:  Make your move.  You must jump.");
+            message.setText("Computer is making their move");
          else
-            message.setText("RED:  Make your move.");
+            message.setText("Computer is making their move");
       }
       
       /* Set selectedRow = -1 to record that the player has not yet selected
@@ -305,7 +318,7 @@ class CheckersCanvas extends Canvas implements ActionListener, MouseListener {
       {
 	      while(board.currentPlayer == CheckersData.RED)
 	      {
-	    	  board.ai.MakeAIMove();
+	    	  board.ai.makeAIMove();
 	      }
       }
    }
@@ -361,9 +374,11 @@ class CheckersCanvas extends Canvas implements ActionListener, MouseListener {
       if (gameInProgress) {
             // First, draw a cyan border around the pieces that can be moved.
          g.setColor(Color.cyan);
-         for (int i = 0; i < board.legalMoves.length; i++) {
-            g.drawRect(2 + board.legalMoves[i].fromCol*20, 2 + board.legalMoves[i].fromRow*20, 19, 19);
-         }
+         if(board.currentPlayer == CheckersData.BLACK)
+	         for (int i = 0; i < board.legalMoves.length; i++) 
+	         {
+	            g.drawRect(2 + board.legalMoves[i].fromCol*20, 2 + board.legalMoves[i].fromRow*20, 19, 19);
+	         }
             // If a piece is selected for moving (i.e. if selectedRow >= 0), then
             // draw a 2-pixel white border around that piece and draw green borders 
             // around eacj square that that piece can be moved to.
@@ -540,12 +555,13 @@ public void setUpGame() {
             	   board.Add(BLACK,row,col);
                else if (row > 4)
             	   board.Add(RED,row,col);
+               else
+            	   board.Add(EMPTY, row, col);
             }
          }
       }
       
       ai = new AI(this);
-      //ai.MakeAIMove();
    }  // end setUpGame()
    
 
@@ -778,7 +794,7 @@ public void setUpGame() {
 
       if (player == RED) {
          if (board.Get(r1,c1) == RED && r2 > r1)
-             return false;  // Regualr red piece can only move down.
+             return false;  // Regular red piece can only move down.
           return true;  // The move is legal.
       }
       else {
