@@ -513,6 +513,10 @@ class CheckersData {
 	  this.currentPlayer = data.currentPlayer;
 	  this.legalMoves = data.legalMoves;
    }
+   public CheckersData(Board newBoard) 
+   {
+	  board = new Board(newBoard);
+   }
    
 @Override
 public boolean equals(Object o) 

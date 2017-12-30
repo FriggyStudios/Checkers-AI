@@ -14,6 +14,11 @@ public class Board
 	   }
    }
    
+   public Board(ArrayList<Byte> thisEntries)
+   {
+	   entries = new ArrayList<Byte>(thisEntries);
+   }
+   
    public Board(Board data)
    {
 	    if (this == data)

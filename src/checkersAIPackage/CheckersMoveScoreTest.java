@@ -17,6 +17,11 @@ public class CheckersMoveScoreTest
 	ArrayList<CheckersMoveScore> moves = new ArrayList<CheckersMoveScore>();
 	private final float score = 2;
 	private final float lowerScore = 1;
+	private CheckersMoveScore NoBlackPieces;
+	private CheckersMoveScore NoRedPieces;
+	private CheckersMoveScore NoBlackMoves;
+	private CheckersMoveScore NoRedMoves;
+	private CheckersMoveScore OpenGame;
 
 	@Before
  	public void setUp()
@@ -25,7 +30,73 @@ public class CheckersMoveScoreTest
 		move2 = new CheckersMoveScore(lowerScore,new CheckersMove(0,0,1,1),new CheckersData((CheckersCanvas)null),CheckersData.BLACK,CheckersData.RED);
 		move3 = new CheckersMoveScore(score,new CheckersMove(0,0,1,1),new CheckersData((CheckersCanvas)null),CheckersData.RED,CheckersData.BLACK);
 		move4 = new CheckersMoveScore(lowerScore,new CheckersMove(0,0,1,1),new CheckersData((CheckersCanvas)null),CheckersData.RED,CheckersData.BLACK);		
- 	}
+		
+		//NoBlackPieces
+		ArrayList<Byte> entries = new ArrayList<Byte>();
+		Board board;
+		for(int i = 0;i < 32;i++)
+	    {
+			entries.add(CheckersData.EMPTY);		   
+	    }
+		entries.add(0,CheckersData.RED_KING);
+		entries.add(20,CheckersData.RED);
+		board = new Board(entries);
+		NoBlackPieces = new CheckersMoveScore(score,new CheckersMove(0,0,1,1),new CheckersData(board),CheckersData.RED,CheckersData.BLACK);
+		
+		//NoRedPieces
+		entries = new ArrayList<Byte>();
+		for(int i = 0;i < 32;i++)
+	    {
+			entries.add(CheckersData.EMPTY);		   
+	    }
+		entries.add(14,CheckersData.BLACK);
+		entries.add(4,CheckersData.BLACK_KING);
+		board = new Board(entries);
+		NoRedPieces = new CheckersMoveScore(score,new CheckersMove(0,0,1,1),new CheckersData(board),CheckersData.BLACK,CheckersData.RED);
+		
+		//NoBlackMoves
+		entries = new ArrayList<Byte>();
+		for(int i = 0;i < 32;i++)
+	    {
+			entries.add(CheckersData.EMPTY);		   
+	    }
+		entries.add(27,CheckersData.BLACK_KING);
+		entries.add(31,CheckersData.BLACK_KING);
+		entries.add(26,CheckersData.RED_KING);
+		entries.add(23,CheckersData.RED_KING);
+		entries.add(22,CheckersData.RED_KING);
+		entries.add(18,CheckersData.RED_KING);
+		board = new Board(entries);
+		NoBlackMoves = new CheckersMoveScore(score,new CheckersMove(0,0,1,1),new CheckersData(board),CheckersData.BLACK,CheckersData.RED);
+		
+		//NoRedMoves
+		entries = new ArrayList<Byte>();
+		for(int i = 0;i < 32;i++)
+	    {
+			entries.add(CheckersData.EMPTY);		   
+	    }
+		entries.add(27,CheckersData.RED_KING);
+		entries.add(31,CheckersData.RED_KING);
+		entries.add(26,CheckersData.BLACK_KING);
+		entries.add(23,CheckersData.BLACK_KING);
+		entries.add(22,CheckersData.BLACK_KING);
+		entries.add(18,CheckersData.BLACK_KING);
+		board = new Board(entries);
+		NoRedMoves = new CheckersMoveScore(score,new CheckersMove(0,0,1,1),new CheckersData(board),CheckersData.RED,CheckersData.BLACK);
+		
+		//OpenGame
+		entries = new ArrayList<Byte>();
+		for(int i = 0;i < 32;i++)
+	    {
+			entries.add(CheckersData.EMPTY);		   
+	    }
+		entries.add(0,CheckersData.RED_KING);
+		entries.add(20,CheckersData.RED);
+		entries.add(14,CheckersData.BLACK);
+		entries.add(4,CheckersData.BLACK_KING);
+		board = new Board(entries);
+		OpenGame = new CheckersMoveScore(score,new CheckersMove(0,0,1,1),new CheckersData(board),CheckersData.RED,CheckersData.BLACK);
+	}
  	@After
  	public void setDown()
  	{
@@ -33,13 +104,17 @@ public class CheckersMoveScoreTest
  		move2 = null;
  		move3 = null;
  		move4 = null;
+ 		NoBlackPieces = null;
+ 		NoRedPieces = null;
+ 		NoBlackMoves = null;
+ 		NoRedMoves = null;
+ 		OpenGame = null;
  	}
 	@Test(timeout=10)
 	public void compareToTest()
 	{
 		assertNotNull(move1.compareTo(move2));
 	}
-	
 	@Test(timeout=10)
 	public void sortTest()
 	{
@@ -65,5 +140,14 @@ public class CheckersMoveScoreTest
 		assertSame(move4,moves.get(0));
 		assertSame(move3,moves.get(1));
 		assertTrue(moves.get(0).score < moves.get(1).score);
+	}
+	@Test(timeout=10)
+	public void finalStateTest()
+	{
+		//assertTrue(NoBlackPieces.finalState);
+		assertTrue(NoRedPieces.finalState);
+		assertTrue(NoBlackMoves.finalState);
+		assertTrue(NoRedMoves.finalState);
+		assertTrue(!OpenGame.finalState);
 	}
 }

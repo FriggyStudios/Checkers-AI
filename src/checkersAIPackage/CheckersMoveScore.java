@@ -9,8 +9,8 @@ public class CheckersMoveScore implements Comparable<CheckersMoveScore>
 	CheckersMove move;
 	CheckersData board;
 	ArrayList<CheckersMoveScore> moves;
-	//goalState true if board after move played is an end game board
-	boolean goalState = false;
+	//finalState true if board after move played is an end game board
+	boolean finalState = false;
 	CheckersMoveScore(float score,CheckersMove move,CheckersData board,byte playerMove,byte playerNextMove)
 	{
 		this.playerMove = playerMove;
@@ -76,7 +76,7 @@ public class CheckersMoveScore implements Comparable<CheckersMoveScore>
 		//Check if one player has no pieces
 		if(RedPieces == 0 && BlackPieces == 0)
 		{
-			goalState = true;
+			finalState = true;
 		}
 		//Check if player to move has no moves
 		else
@@ -84,7 +84,7 @@ public class CheckersMoveScore implements Comparable<CheckersMoveScore>
 			CheckersMove[] moves = board.getLegalMoves(playerNextMove);
 			if(moves == null)
 			{
-				goalState = true;
+				finalState = true;
 			}
 		}
 	}

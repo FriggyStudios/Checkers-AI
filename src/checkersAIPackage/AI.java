@@ -145,7 +145,7 @@ public class AI
 				for(int j = 0;j < localDepthMoves1.size();j++)
 				{
 					CheckersMoveScore localMove = localDepthMoves1.get(j);
-					if(!localMove.goalState && localMove.moves != null)
+					if(!localMove.finalState && localMove.moves != null)
 					{
 						for(int k = 0;k < localMove.moves.size();k++)
 						{
@@ -189,7 +189,7 @@ public class AI
 			for(int j = 0;j < branchMoves.get(branchMoves.size()-1).size();j++)
 			{
 				CheckersMoveScore localMove = branchMoves.get(branchMoves.size()-1).get(j);
-				if(!localMove.goalState)
+				if(!localMove.finalState)
 				{
 					for(int k = 0;k < localMove.moves.size();k++)
 					{
@@ -231,7 +231,7 @@ public class AI
 			CheckersData localDataTemp = new CheckersData(branchMoves.get(branchMoves.size()-1).get(i).board);
 			ArrayList<CheckersMoveScore> localMoveScores = new ArrayList<CheckersMoveScore>();
 			CheckersMove[] moves = localData.getLegalMoves(localData.currentPlayer);
-			if(!branchMoves.get(branchMoves.size()-1).get(i).goalState)
+			if(!branchMoves.get(branchMoves.size()-1).get(i).finalState)
 			{
 				for(int j = 0;j < moves.length;j++)
 				{
@@ -275,7 +275,7 @@ public class AI
 			{
 				CheckersMoveScore localMove = branchMoves.get(i).get(k);
 				int scoreIndex = 0;
-				if(localMove.moves != null && !localMove.goalState)
+				if(localMove.moves != null && !localMove.finalState)
 				{
 					for(int j = 0;j < localMove.moves.size();j++)
 					{
