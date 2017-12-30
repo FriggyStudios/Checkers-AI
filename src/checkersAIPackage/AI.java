@@ -5,11 +5,9 @@ import java.util.Collections;
 
 public class AI
 {
-	//Board properties multiplied by polynomialCoefficients values in that order to calculate favourability of a board to a player
-	//{RedPieces,-BlackPieces,RedKingPieces,-BlackKingPieces}
-	static ArrayList<Float> polynomialCoefficients;
+	Polynomial poly;
 	CheckersData data;
-	int depth = 9;
+	int depth = 7;
 	ArrayList<ArrayList<CheckersMoveScore>> branchMoves;
 	CheckersMoveScore prevMove;
 	//Max time allowed in IncreaseDepth
@@ -20,71 +18,22 @@ public class AI
 	public AI(CheckersData data)
 	{		
 		this.data = data;
-		polynomialCoefficients = new ArrayList<Float>();
+		//Board properties multiplied by polynomialCoefficients values in that order to calculate favourability of a board to a player
+		//{RedPieces,-BlackPieces,RedKingPieces,-BlackKingPieces,RedAdjacent,-BlackAdjacent,
+		//RedCentre,-BlackCentre,RedToKing,-BlackToKing}
+		ArrayList<Float>  polynomialCoefficients = new ArrayList<Float>();
 		polynomialCoefficients.add(.1f);
 		polynomialCoefficients.add(.1f);
 		polynomialCoefficients.add(.13f);
 		polynomialCoefficients.add(.13f);
-	}
-	
-	
-	//Favourability board position for player red
-	//Returns float from low(bad for red) to high(good for red)
-	static float scoreBoard(CheckersData dataLocal)
-	{
-		int RedPieces=0; int BlackPieces = 0;
-		int RedKingPieces = 0; int BlackKingPieces = 0;
-		
-		//Calculate above variables
-		for(int i = 0;i < 8;i+=2)
-		{
-			for(int j = 1;j < 8;j+=2)
-			{
-				if(dataLocal.board.Get(i, j) == CheckersData.RED)
-				{
-					RedPieces++;
-				}
-				else if(dataLocal.board.Get(i, j) == CheckersData.BLACK)
-				{
-					BlackPieces++;
-				}
-				else if(dataLocal.board.Get(i, j) == CheckersData.RED_KING)
-				{
-					RedKingPieces++;
-				}
-				else if(dataLocal.board.Get(i, j) == CheckersData.BLACK_KING)
-				{
-					BlackKingPieces++;		
-				}
-			}
-		}
-		for(int i = 1;i < 8;i+=2)
-		{
-			for(int j = 0;j < 8;j+=2)
-			{
-				if(dataLocal.board.Get(i, j) == CheckersData.RED)
-				{
-					RedPieces++;
-				}
-				else if(dataLocal.board.Get(i, j) == CheckersData.BLACK)
-				{
-					BlackPieces++;
-				}
-				else if(dataLocal.board.Get(i, j) == CheckersData.RED_KING)
-				{
-					RedKingPieces++;
-				}
-				else if(dataLocal.board.Get(i, j) == CheckersData.BLACK_KING)
-				{
-					BlackKingPieces++;		
-				}
-			}
-		}
-		//Return score of favourability of board relative to red player
-		float score = RedPieces*polynomialCoefficients.get(0) - BlackPieces*polynomialCoefficients.get(1)
-				 	+ RedKingPieces*polynomialCoefficients.get(2) - BlackKingPieces*polynomialCoefficients.get(3);
-		return score;
-	}
+		polynomialCoefficients.add(.01f);
+		polynomialCoefficients.add(.01f);
+		polynomialCoefficients.add(.03f);
+		polynomialCoefficients.add(.03f);
+		polynomialCoefficients.add(.005f);
+		polynomialCoefficients.add(.005f);
+		poly = new Polynomial(polynomialCoefficients);
+	}	
 	
 	//Calculates score of board as far as depth moves ahead
 	//Makes move based on scores updated back from score of boards of furthest depth
@@ -105,7 +54,7 @@ public class AI
 				byte playerMoveNext = localData.currentPlayer;
 				
 				localData.makeMove(moves[i]);
-				scores[i] = scoreBoard(localData);
+				scores[i] = poly.scoreBoard(localData);
 				if (moves[i].isJump())
 				{
 					CheckersMove[] localCheckersMove = localData.getLegalJumpsFrom(localData.currentPlayer,moves[i].toRow,moves[i].toCol);
@@ -290,7 +239,7 @@ public class AI
 					byte playerMove = localData.currentPlayer;
 					byte playerMoveNext = localData.currentPlayer;
 					localData.makeMove(moves[j]);
-					float score = scoreBoard(localData);
+					float score = poly.scoreBoard(localData);
 					if (moves[j].isJump()) 
 					{
 						CheckersMove[] localCheckersMove = localData.getLegalJumpsFrom(localData.currentPlayer,moves[j].toRow,moves[j].toCol);

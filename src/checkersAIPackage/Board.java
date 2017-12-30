@@ -25,6 +25,10 @@ public class Board
    
    public byte Get(int x, int y)
    {
+	   if(x < 0 || x >= 8 || y < 0 || y >= 8)
+	   {
+		   return CheckersData.EMPTY;
+	   }
 	   if(x%2 != y%2)
 		   if(x%2 == 0)
 			   return entries.get((x/2)+(y*4));
