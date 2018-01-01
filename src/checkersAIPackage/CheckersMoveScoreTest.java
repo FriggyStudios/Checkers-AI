@@ -113,7 +113,8 @@ public class CheckersMoveScoreTest
 	@Test(timeout=10)
 	public void compareToTest()
 	{
-		assertNotNull(move1.compareTo(move2));
+		assertNotNull("CheckersMoveScore comparison should not be null",
+				move1.compareTo(move2));
 	}
 	@Test(timeout=10)
 	public void sortTest()
@@ -121,33 +122,33 @@ public class CheckersMoveScoreTest
 		moves.add(move1);
 		moves.add(move2);
 		Collections.sort(moves);
-		assertNotNull(moves);
+		assertNotNull("Sorted CheckersMoveScore should not be null", moves);
 		
-		assertSame(CheckersData.BLACK,moves.get(0).playerMove);
-		assertSame(CheckersData.BLACK,moves.get(1).playerMove);
-		assertSame(move2,moves.get(0));
-		assertSame(move1,moves.get(1));
-		assertTrue(moves.get(0).score < moves.get(1).score);
+		assertSame("CheckersMoveScore top should be BLACK",CheckersData.BLACK,moves.get(0).playerMove);
+		assertSame("CheckersMoveScore second top should be BLACK",CheckersData.BLACK,moves.get(1).playerMove);
+		assertSame("CheckersMoveScore top should be move 2",move2,moves.get(0));
+		assertSame("CheckersMoveScore second top should be move 1",move1,moves.get(1));
+		assertTrue("CheckersMoveScore top should be less than CheckersMoveScore second top",moves.get(0).score < moves.get(1).score);
 		
 		moves = new ArrayList<CheckersMoveScore>();
 		moves.add(move3);
 		moves.add(move4);
 		Collections.sort(moves);
-		assertNotNull(moves);
+		assertNotNull("Sorted CheckersMoveScore should not be null",moves);
 		
-		assertSame(CheckersData.RED,moves.get(0).playerMove);
-		assertSame(CheckersData.RED,moves.get(1).playerMove);
-		assertSame(move4,moves.get(0));
-		assertSame(move3,moves.get(1));
-		assertTrue(moves.get(0).score < moves.get(1).score);
+		assertSame("CheckersMoveScore top should be RED",CheckersData.RED,moves.get(0).playerMove);
+		assertSame("CheckersMoveScore second top should be BLACK",CheckersData.RED,moves.get(1).playerMove);
+		assertSame("CheckersMoveScore top should be move 4",move4,moves.get(0));
+		assertSame("CheckersMoveScore second top should be move 3",move3,moves.get(1));
+		assertTrue("CheckersMoveScore top should be less than CheckersMoveScore second top",moves.get(0).score < moves.get(1).score);
 	}
 	@Test(timeout=10)
 	public void finalStateTest()
 	{
-		//assertTrue(NoBlackPieces.finalState);
-		assertTrue(NoRedPieces.finalState);
-		assertTrue(NoBlackMoves.finalState);
-		assertTrue(NoRedMoves.finalState);
-		assertTrue(!OpenGame.finalState);
+		assertTrue("No black pieces, red should win",NoBlackPieces.finalState);
+		assertTrue("No red pieces, black should win",NoRedPieces.finalState);
+		assertTrue("No black moves, red should win",NoBlackMoves.finalState);
+		assertTrue("No red moves, black should win",NoRedMoves.finalState);
+		assertTrue("Moves for both players, game not over",!OpenGame.finalState);
 	}
 }

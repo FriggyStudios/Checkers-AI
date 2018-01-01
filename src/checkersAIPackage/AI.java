@@ -33,6 +33,19 @@ public class AI
 		poly = new Polynomial(polynomialCoefficients);
 	}	
 	
+	public AI(CheckersData data,byte newPlayer,byte newOtherPlayer,Polynomial newPoly)
+	{
+		this.data = data;
+		player = newPlayer;
+		otherPlayer = newOtherPlayer;
+		poly = newPoly;
+	}
+	
+	public void updatePolynomial(Polynomial newPoly)
+	{
+		poly = new Polynomial(newPoly);
+	}
+	
 	//Calculates score of board as far as depth moves ahead
 	//Makes move based on scores updated back from score of boards of furthest depth
 	public void makeAIMove()

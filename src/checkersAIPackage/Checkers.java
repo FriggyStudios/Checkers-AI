@@ -102,6 +102,10 @@ class CheckersCanvas extends Canvas implements ActionListener, MouseListener {
    Button evolButton; //Change state to 1 parent 1 offspring mutation oriented evolution of the AI's heuristic polynomial
    boolean evol = false;
    
+   AI aiRed;
+   AI aiBlack;
+   Evolve evolve;
+   
    String makingMoveText;
    String startGameText;
    
@@ -136,16 +140,20 @@ class CheckersCanvas extends Canvas implements ActionListener, MouseListener {
       evolButton.addActionListener(this);
       message = new Label("",Label.CENTER);
       board = new CheckersData(this);
+      aiRed = new AI(board,CheckersData.RED,CheckersData.BLACK);
+      aiBlack = new AI(board,CheckersData.BLACK,CheckersData.RED);
+      evolve = new Evolve(aiRed,aiBlack,"heuristicPolynomial.ser");
       setNotEvol();
       doNewGame();
-      board.aiRed.makeAIMove();
+      aiRed.makeAIMove();
 	  message.setText(startGameText);
 	  message.setText(startGameText);
    }
    
    public void setEvol()
    {
-	   evol = true;   
+	   evol = true;
+	   evolve.init();
 	   makingMoveText = "Computer is making their move";
 	   startGameText ="Evolution: Computer vs Computer";
    }
@@ -222,6 +230,7 @@ class CheckersCanvas extends Canvas implements ActionListener, MouseListener {
       if(evol)
       {
 	      evolButton.setEnabled(false);
+	      setEvol();
 	      doNewGame();
       }
       else
@@ -371,7 +380,7 @@ class CheckersCanvas extends Canvas implements ActionListener, MouseListener {
     	  if(board.currentPlayer == CheckersData.RED)
 		      while(board.currentPlayer == CheckersData.RED)
 		      {
-		    	  board.aiRed.makeAIMove();
+		    	  aiRed.makeAIMove();
 		    	  /*try 
 	    	   	{
 					Thread.sleep(1000);
@@ -385,7 +394,7 @@ class CheckersCanvas extends Canvas implements ActionListener, MouseListener {
     	  else if(evol)
     		  while(board.currentPlayer == CheckersData.BLACK)
 		      {
-		    	  board.aiBlack.makeAIMove();  
+		    	  aiBlack.makeAIMove();  
 		    	  /*try 
 		    	  {
 						Thread.sleep(1000);
@@ -557,8 +566,7 @@ class CheckersData {
        on the board.  The constants RED and BLACK also represent players
        in the game.
    */
-   AI aiRed;
-   AI aiBlack;
+  
    CheckersCanvas canvas;
    public static final byte
              EMPTY = 0,
@@ -642,9 +650,7 @@ public void setUpGame() {
             }
          }
       }
-      
-      aiRed = new AI(this,CheckersData.RED,CheckersData.BLACK);
-      aiBlack = new AI(this,CheckersData.BLACK,CheckersData.RED);
+    
    }  // end setUpGame()
    
 

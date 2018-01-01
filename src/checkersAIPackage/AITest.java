@@ -26,8 +26,10 @@ public class AITest
 		//lower depth, so can add another depth
 		ai.depth = 7;
 		ai.makeAIMove();
-		assertNull(ai.branchMoves.get(ai.branchMoves.size()-1).get(0).moves);
+		assertNull("AI search branches should not be null after making more",
+				ai.branchMoves.get(ai.branchMoves.size()-1).get(0).moves);
 		ai.increaseDepth();
-		assertNotNull(ai.branchMoves.get(ai.branchMoves.size()-1).get(0).moves);
+		assertNotNull("AI search branches should not be null after increasing branch depth",
+				ai.branchMoves.get(ai.branchMoves.size()-1).get(0).moves);
 	}
 }

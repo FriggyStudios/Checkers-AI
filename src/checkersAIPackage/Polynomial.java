@@ -2,13 +2,17 @@ package checkersAIPackage;
 
 import java.util.ArrayList;
 
-public class Polynomial 
+public class Polynomial implements java.io.Serializable
 {
 	ArrayList<Float> coefficients;
 	
 	public Polynomial(ArrayList<Float> thisCoefficients)
 	{
 		coefficients = thisCoefficients;
+	}
+	public Polynomial(Polynomial poly)
+	{
+		coefficients = new ArrayList<Float>(poly.coefficients);
 	}
 
 	//Favourability board position for player red
