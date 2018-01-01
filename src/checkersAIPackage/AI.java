@@ -7,6 +7,7 @@ public class AI
 {
 	Polynomial poly;
 	CheckersData data;
+	byte player, otherPlayer;
 	int depth = 7;
 	ArrayList<ArrayList<CheckersMoveScore>> branchMoves;
 	CheckersMoveScore prevMove;
@@ -15,22 +16,19 @@ public class AI
 	//Max size of list in branchMoves
 	float maxBranchSize = 300000;
 	
-	public AI(CheckersData data)
+	public AI(CheckersData data,byte newPlayer,byte newOtherPlayer)
 	{		
 		this.data = data;
+		player = newPlayer;
+		otherPlayer = newOtherPlayer;
 		//Board properties multiplied by polynomialCoefficients values in that order to calculate favourability of a board to a player
 		//{RedPieces,-BlackPieces,RedKingPieces,-BlackKingPieces,RedAdjacent,-BlackAdjacent,
 		//RedCentre,-BlackCentre,RedToKing,-BlackToKing}
 		ArrayList<Float>  polynomialCoefficients = new ArrayList<Float>();
 		polynomialCoefficients.add(.1f);
-		polynomialCoefficients.add(.1f);
-		polynomialCoefficients.add(.13f);
 		polynomialCoefficients.add(.13f);
 		polynomialCoefficients.add(.01f);
-		polynomialCoefficients.add(.01f);
 		polynomialCoefficients.add(.03f);
-		polynomialCoefficients.add(.03f);
-		polynomialCoefficients.add(.005f);
 		polynomialCoefficients.add(.005f);
 		poly = new Polynomial(polynomialCoefficients);
 	}	
@@ -39,7 +37,7 @@ public class AI
 	//Makes move based on scores updated back from score of boards of furthest depth
 	public void makeAIMove()
 	{	
-		CheckersMove[] moves = data.getLegalMoves(CheckersData.RED);
+		CheckersMove[] moves = data.getLegalMoves(player);
 		float[] scores = new float[moves.length];
 		ArrayList<CheckersMoveScore> moveScores = new ArrayList<CheckersMoveScore>();
 		
@@ -60,16 +58,16 @@ public class AI
 					CheckersMove[] localCheckersMove = localData.getLegalJumpsFrom(localData.currentPlayer,moves[i].toRow,moves[i].toCol);
 			         if (localCheckersMove == null) 
 			         {
-			        	 if (localData.currentPlayer == CheckersData.RED)
-		        		 	  playerMoveNext = CheckersData.BLACK;
+			        	 if (localData.currentPlayer == player)
+		        		 	  playerMoveNext = otherPlayer;
 			              else
-			            	  playerMoveNext = CheckersData.RED;
+			            	  playerMoveNext = player;
 			         }
 				}
-		         else if (localData.currentPlayer == CheckersData.RED)
-	        	 		  playerMoveNext = CheckersData.BLACK;
+		         else if (localData.currentPlayer == player)
+	        	 		  playerMoveNext = otherPlayer;
 		              else
-		            	  playerMoveNext = CheckersData.RED;
+		            	  playerMoveNext = player;
 				localData.currentPlayer = playerMoveNext;
 				moveScores.add(new CheckersMoveScore(scores[i],moves[i],localData,playerMove,playerMoveNext));
 			}

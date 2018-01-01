@@ -12,7 +12,7 @@ public class AITest
 	@Before
  	public void setUp()
 	{
-		ai = new AI(new CheckersData(new CheckersCanvas()));
+		ai = new AI(new CheckersData(new CheckersCanvas()),CheckersData.RED,CheckersData.BLACK);
 		assertNotNull(ai);
 	}
  	@After

@@ -4,7 +4,7 @@
    */
 
 /*
-   This applet lets two uses play checkers against each other.
+   This applet lets two users play checkers against each other.
    Red always starts the game.  If a player can jump an opponent's
    piece, then the player must jump.  When a player can make no more
    moves, the game ends.
@@ -56,6 +56,9 @@ public class Checkers extends Applet {
 
       board.resignButton.setBackground(Color.lightGray);
       add(board.resignButton);
+      
+      board.evolButton.setBackground(Color.lightGray);
+      add(board.evolButton);
 
       board.message.setForeground(Color.green);
       board.message.setFont(new Font("Serif", Font.BOLD, 14));
@@ -65,9 +68,15 @@ public class Checkers extends Applet {
          its setBounds() method. */
 
       board.setBounds(20,20,164,164); // Note:  size MUST be 164-by-164 !
-      board.newGameButton.setBounds(210, 60, 100, 30);
-      board.resignButton.setBounds(210, 120, 100, 30);
+      board.newGameButton.setBounds(210, 25, 100, 30);
+      board.resignButton.setBounds(210, 85, 100, 30);
+      board.evolButton.setBounds(210, 145, 100, 30);
       board.message.setBounds(0, 200, 330, 30);
+      if(board.evol)
+      {
+    	  board.doClickSquare(2,5);
+      }
+      repaint();
    }
    
 } // end class Checkers
@@ -90,6 +99,11 @@ class CheckersCanvas extends Canvas implements ActionListener, MouseListener {
    Button resignButton;   // Current player can resign by clicking this button.
    Button newGameButton;  // This button starts a new game.  It is enabled only
                           //     when the current game has ended.
+   Button evolButton; //Change state to 1 parent 1 offspring mutation oriented evolution of the AI's heuristic polynomial
+   boolean evol = false;
+   
+   String makingMoveText;
+   String startGameText;
    
    Label message;   // A label for displaying messages to the user.
    
@@ -118,12 +132,29 @@ class CheckersCanvas extends Canvas implements ActionListener, MouseListener {
       resignButton.addActionListener(this);
       newGameButton = new Button("New Game");
       newGameButton.addActionListener(this);
+      evolButton = new Button("Evolve");
+      evolButton.addActionListener(this);
       message = new Label("",Label.CENTER);
       board = new CheckersData(this);
+      setNotEvol();
       doNewGame();
-      board.ai.makeAIMove();
+      board.aiRed.makeAIMove();
+	  message.setText(startGameText);
+	  message.setText(startGameText);
    }
    
+   public void setEvol()
+   {
+	   evol = true;   
+	   makingMoveText = "Computer is making their move";
+	   startGameText ="Evolution: Computer vs Computer";
+   }
+   public void setNotEvol()
+   {
+	   evol = false;
+	   makingMoveText = "Make your move";
+	   startGameText ="Playing against AI";
+   }
 
    public void actionPerformed(ActionEvent evt) {
          // Respond to user's click on one of the two buttons.
@@ -132,6 +163,16 @@ class CheckersCanvas extends Canvas implements ActionListener, MouseListener {
          doNewGame();
       else if (src == resignButton)
          doResign();
+      if(src == evolButton)
+      {
+    	  if(evol)
+    	  {
+    		  message.setText("Already evolving!");
+    		  return;
+    	  }
+    	  setEvol();
+    	  doNewGame();
+      }
    }
    
 
@@ -151,6 +192,7 @@ class CheckersCanvas extends Canvas implements ActionListener, MouseListener {
       gameInProgress = true;
       newGameButton.setEnabled(false);
       resignButton.setEnabled(true);
+      evolButton.setEnabled(false);
       repaint();
    }
    
@@ -161,6 +203,7 @@ class CheckersCanvas extends Canvas implements ActionListener, MouseListener {
           message.setText("There is no game in progress!");
           return;
        }
+       setNotEvol();
        if (board.currentPlayer == CheckersData.RED)
           gameOver("RED resigns.  BLACK wins.");
        else
@@ -176,6 +219,15 @@ class CheckersCanvas extends Canvas implements ActionListener, MouseListener {
       newGameButton.setEnabled(true);
       resignButton.setEnabled(false);
       gameInProgress = false;
+      if(evol)
+      {
+	      evolButton.setEnabled(false);
+	      doNewGame();
+      }
+      else
+      {
+	      evolButton.setEnabled(true);
+      }
    }
       
 
@@ -196,7 +248,7 @@ class CheckersCanvas extends Canvas implements ActionListener, MouseListener {
             if (board.currentPlayer == CheckersData.RED)
                message.setText("Computer is making their move");
             else
-               message.setText("Make your move.");
+               message.setText(makingMoveText);
             repaint();
             return;
          }
@@ -209,7 +261,7 @@ class CheckersCanvas extends Canvas implements ActionListener, MouseListener {
           return;
       }
       
-      /* If the user clicked on a squre where the selected piece can be
+      /* If the user clicked on a square where the selected piece can be
          legally moved, then make the move and return. */
 
       for (int i = 0; i < board.legalMoves.length; i++)
@@ -265,9 +317,9 @@ class CheckersCanvas extends Canvas implements ActionListener, MouseListener {
          if (board.legalMoves == null)
             gameOver("BLACK has no moves.  RED wins.");
          else if (board.legalMoves[0].isJump())
-            message.setText("Make your move.  You must jump.");
+            message.setText(makingMoveText +  "You must jump.");
          else
-            message.setText("Make your move.");
+            message.setText(makingMoveText);
       }
       else {
     	  board.currentPlayer = CheckersData.RED;
@@ -316,10 +368,35 @@ class CheckersCanvas extends Canvas implements ActionListener, MouseListener {
       paint(g);
       if(gameInProgress)
       {
-	      while(board.currentPlayer == CheckersData.RED)
-	      {
-	    	  board.ai.makeAIMove();
-	      }
+    	  if(board.currentPlayer == CheckersData.RED)
+		      while(board.currentPlayer == CheckersData.RED)
+		      {
+		    	  board.aiRed.makeAIMove();
+		    	  /*try 
+	    	   	{
+					Thread.sleep(1000);
+				}
+				catch (InterruptedException e) 
+				{
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}*/
+		      }
+    	  else if(evol)
+    		  while(board.currentPlayer == CheckersData.BLACK)
+		      {
+		    	  board.aiBlack.makeAIMove();  
+		    	  /*try 
+		    	  {
+						Thread.sleep(1000);
+					} 
+					catch (InterruptedException e) 
+					{
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+		      	  }*/
+		      }
       }
    }
    
@@ -480,7 +557,8 @@ class CheckersData {
        on the board.  The constants RED and BLACK also represent players
        in the game.
    */
-   AI ai;
+   AI aiRed;
+   AI aiBlack;
    CheckersCanvas canvas;
    public static final byte
              EMPTY = 0,
@@ -565,7 +643,8 @@ public void setUpGame() {
          }
       }
       
-      ai = new AI(this);
+      aiRed = new AI(this,CheckersData.RED,CheckersData.BLACK);
+      aiBlack = new AI(this,CheckersData.BLACK,CheckersData.RED);
    }  // end setUpGame()
    
 

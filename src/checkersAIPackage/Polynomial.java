@@ -176,11 +176,11 @@ public class Polynomial
 		
 		
 		//Return score of favourability of board relative to red player
-		float score = RedPieces*coefficients.get(0) - BlackPieces*coefficients.get(1)
-				 	+ RedKingPieces*coefficients.get(2) - BlackKingPieces*coefficients.get(3)
-					+ RedAdjacent*coefficients.get(4) - BlackAdjacent*coefficients.get(5)
-					+ RedCentre*coefficients.get(6) - BlackCentre*coefficients.get(7)
-					+ RedToKing*coefficients.get(8) - BlackToKing*coefficients.get(9);
+		float score = RedPieces*coefficients.get(0) - BlackPieces*coefficients.get(0)
+				 	+ RedKingPieces*coefficients.get(1) - BlackKingPieces*coefficients.get(1)
+					+ RedAdjacent*coefficients.get(2) - BlackAdjacent*coefficients.get(2)
+					+ RedCentre*coefficients.get(3) - BlackCentre*coefficients.get(3)
+					+ RedToKing*coefficients.get(4) - BlackToKing*coefficients.get(4);
 		return score;
 	}
 }
