@@ -72,7 +72,7 @@ public class Checkers extends Applet {
       board.resignButton.setBounds(210, 85, 100, 30);
       board.evolButton.setBounds(210, 145, 100, 30);
       board.message.setBounds(0, 200, 330, 30);
-      if(board.evol)
+      if(board.board.evol)
       {
     	  board.doClickSquare(2,5);
       }
@@ -99,8 +99,7 @@ class CheckersCanvas extends Canvas implements ActionListener, MouseListener {
    Button resignButton;   // Current player can resign by clicking this button.
    Button newGameButton;  // This button starts a new game.  It is enabled only
                           //     when the current game has ended.
-   Button evolButton; //Change state to 1 parent 1 offspring mutation oriented evolution of the AI's heuristic polynomial
-   boolean evol = false;
+   Button evolButton; //Change state to 1 parent 1 offspring mutation oriented evolution of the AI's heuristic polynomia
    
    AI aiRed;
    AI aiBlack;
@@ -152,14 +151,14 @@ class CheckersCanvas extends Canvas implements ActionListener, MouseListener {
    
    public void setEvol()
    {
-	   evol = true;
+	   board.evol = true;
 	   evolve.init();
 	   makingMoveText = "Computer is making their move";
 	   startGameText ="Evolution: Computer vs Computer";
    }
    public void setNotEvol()
    {
-	   evol = false;
+	   board.evol = false;
 	   makingMoveText = "Make your move";
 	   startGameText ="Playing against AI";
    }
@@ -173,7 +172,7 @@ class CheckersCanvas extends Canvas implements ActionListener, MouseListener {
          doResign();
       if(src == evolButton)
       {
-    	  if(evol)
+    	  if(board.evol)
     	  {
     		  message.setText("Already evolving!");
     		  return;
@@ -186,7 +185,7 @@ class CheckersCanvas extends Canvas implements ActionListener, MouseListener {
 
    void doNewGame() {
          // Begin a new game.
-      if (gameInProgress == true && !evol) {
+      if (gameInProgress == true && !board.evol) {
              // This should not be possible, but it doens't 
              // hurt to check.
          message.setText("Finish the current game first!");
@@ -227,7 +226,7 @@ class CheckersCanvas extends Canvas implements ActionListener, MouseListener {
       newGameButton.setEnabled(true);
       resignButton.setEnabled(false);
       gameInProgress = false;
-      if(evol)
+      if(board.evol)
       {
     	  evolve.endGame(winner);
 	      evolButton.setEnabled(false);
@@ -392,7 +391,7 @@ class CheckersCanvas extends Canvas implements ActionListener, MouseListener {
 					e.printStackTrace();
 				}*/
 		      }
-    	  else if(evol)
+    	  else if(board.evol)
     		  while(board.currentPlayer == CheckersData.BLACK)
 		      {
 		    	  aiBlack.makeAIMove();  
@@ -585,6 +584,7 @@ class CheckersData {
                                //   current player.   
    int movesCount = 0;
    int movesBeforeDraw = 100;
+   boolean evol = false;
 
    public CheckersData(CheckersCanvas canvas) {
          // Constructor.  Create the board and set it up for a new game.
@@ -674,7 +674,7 @@ public void setUpGame() {
    public void makeMove(CheckersMove move) {
          // Make the specified move.  It is assumed that move
          // is non-null and that the move it represents is legal.
-	   if(movesCount >= movesBeforeDraw)
+	   if(evol && movesCount >= movesBeforeDraw)
 	   {
 		   canvas.evolve.endGameDraw(this);
 		   canvas.evolve.init();

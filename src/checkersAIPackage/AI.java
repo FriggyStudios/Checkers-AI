@@ -12,13 +12,13 @@ public class AI
 	Polynomial poly;
 	CheckersData data;
 	byte player, otherPlayer;
-	int depth = 8;
+	int depth = 15;
 	ArrayList<ArrayList<CheckersMoveScore>> branchMoves;
 	CheckersMoveScore prevMove;
 	//Max time allowed in IncreaseDepth
-	int timePerIncreaseDepth = 10000;
+	int timePerIncreaseDepth = 500;
 	//Max size of list in branchMoves
-	float maxBranchSize = 1000;
+	float maxBranchSize = 50000;
 	
 	public AI(CheckersData data,byte newPlayer,byte newOtherPlayer)
 	{		
