@@ -2,6 +2,8 @@ package checkersAIPackage;
 
 import static org.junit.Assert.*;
 
+import java.util.ArrayList;
+
 import org.junit.*;
 
 public class EvolveTest 
@@ -13,9 +15,18 @@ public class EvolveTest
 	@Before
 	public void setUp()
 	{
+		ArrayList<Float> polyRed = new ArrayList<Float>();
+		ArrayList<Float> polyBlack = new ArrayList<Float>();
+		polyRed.add(0f);polyRed.add(0f);polyRed.add(0f);
+		polyRed.add(0f);polyRed.add(0f);polyRed.add(0f);
+		polyBlack.add(1f);polyBlack.add(0f);polyBlack.add(0f);
+		polyBlack.add(1f);polyBlack.add(0f);polyBlack.add(0f);
 		aiRed = new AI(null,CheckersData.RED,CheckersData.BLACK);
 		aiBlack = new AI(null,CheckersData.BLACK,CheckersData.RED);
 		evolve = new Evolve(aiRed ,aiBlack,"EvolveTestFile.txt");
+		evolve.aiRed.updatePolynomial(new Polynomial(polyRed));
+		evolve.aiBlack.updatePolynomial(new Polynomial(polyBlack));
+		evolve.parentPoly = evolve.aiRed.poly;
 	}
 	
 	@After public void setDown()
@@ -43,10 +54,9 @@ public class EvolveTest
 	@Test
 	public void endGameParentWinsTest()
 	{
-		evolve.parentAI = evolve.aiBlack;
 		evolve.endGame(evolve.parentAI);
 		assertEquals("Parent polynomial that wins game should stay same",
-				aiBlack.poly.coefficients,evolve.parentPoly.coefficients);
+				evolve.aiRed.poly.coefficients,evolve.parentPoly.coefficients);
 	}
 	@Test
 	public void endGameParentLosesTest()
@@ -55,6 +65,27 @@ public class EvolveTest
 		evolve.gamesWon = 1;
 		evolve.endGame(aiRed);
 		assertEquals("Parent polynomial should update when parent loses",
+				aiRed.poly.coefficients,evolve.parentPoly.coefficients);
+	}
+	@Test
+	public void endGameDrawParentWinsTest()
+	{
+        evolve.parentPoly = new Polynomial(evolve.aiBlack.poly);
+		CheckersData data = new CheckersData((CheckersCanvas)(null));
+		data.board.Add(CheckersData.BLACK_KING, 0, 1);
+		evolve.endGameDraw(data);
+		assertEquals("Parent polynomial that wins draw game should stay same",
+				aiBlack.poly.coefficients,evolve.parentPoly.coefficients);
+	}
+	@Test
+	public void endGameDrawParentLosesTest()
+	{
+        evolve.parentPoly = new Polynomial(evolve.aiBlack.poly);
+		evolve.gamesWon = 1;
+		CheckersData data = new CheckersData((CheckersCanvas)(null));
+		data.board.Add(CheckersData.RED_KING, 1, 0);
+		evolve.endGameDraw(data);
+		assertEquals("Parent polynomial should update when parent loses final drawen game",
 				aiRed.poly.coefficients,evolve.parentPoly.coefficients);
 	}
 	

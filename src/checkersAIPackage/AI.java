@@ -14,6 +14,7 @@ public class AI
 	byte player, otherPlayer;
 	int depth = 15;
 	ArrayList<ArrayList<CheckersMoveScore>> branchMoves;
+	ArrayList<CheckersMoveScore> moveScores;
 	CheckersMoveScore prevMove;
 	//Max time allowed in IncreaseDepth
 	int timePerIncreaseDepth = 500;
@@ -66,152 +67,171 @@ public class AI
 	//Makes move based on scores updated back from score of boards of furthest depth
 	public void makeAIMove()
 	{	
-		CheckersMove[] moves = data.getLegalMoves(player);
-		float[] scores = new float[moves.length];
-		ArrayList<CheckersMoveScore> moveScores = new ArrayList<CheckersMoveScore>();
-		
+		moveScores = new ArrayList<CheckersMoveScore>();
 		//branchMoves null on first MakeAIMove call or if failure in finding board in previous branchMoves
 		//Calculate first list of moves for brancMoves
-		if(branchMoves == null || branchMoves != null)
+		if(branchMoves == null)
 		{
-			for(int i = 0;i < moves.length;i++)
+			if(calculateFirstMoves())
 			{
-				CheckersData localData = new CheckersData(data);
-				byte playerMove = localData.currentPlayer;
-				byte playerMoveNext = localData.currentPlayer;
-				
-				localData.makeMove(moves[i]);
-				scores[i] = poly.scoreBoard(localData);
-				if (moves[i].isJump())
-				{
-					CheckersMove[] localCheckersMove = localData.getLegalJumpsFrom(localData.currentPlayer,moves[i].toRow,moves[i].toCol);
-			         if (localCheckersMove == null) 
-			         {
-			        	 if (localData.currentPlayer == player)
-		        		 	  playerMoveNext = otherPlayer;
-			              else
-			            	  playerMoveNext = player;
-			         }
-				}
-		         else if (localData.currentPlayer == player)
-	        	 		  playerMoveNext = otherPlayer;
-		              else
-		            	  playerMoveNext = player;
-				localData.currentPlayer = playerMoveNext;
-				moveScores.add(new CheckersMoveScore(scores[i],moves[i],localData,playerMove,playerMoveNext));
+				return;
 			}
-			branchMoves = new ArrayList<ArrayList<CheckersMoveScore>>();
-			branchMoves.add(moveScores);			
 		}
 		//Find current board in branchMoves
 		//Make new branchMoves starting from this point in old branchMoves
 		else
 		{
-			ArrayList<ArrayList<CheckersMoveScore>> localBranchMoves = new ArrayList<ArrayList<CheckersMoveScore>>();
-			ArrayList<ArrayList<CheckersMoveScore>> oldMoves = new ArrayList<ArrayList<CheckersMoveScore>>();
-			ArrayList<CheckersMoveScore> localDepthMoves1 = new ArrayList<CheckersMoveScore>();
-			ArrayList<CheckersMoveScore> localDepthMoves3 = new ArrayList<CheckersMoveScore>();
-			if(prevMove.moves == null)
+			//calculateFirstMoves();
+			if(updateBranchMovesFromPreviousBranch())
 			{
-				System.out.println("prevMove moves is null");
-				branchMoves = null;
-				makeAIMove();
 				return;
 			}
-			oldMoves.add(prevMove.moves);
-			boolean boardFound = false;
-			int depthBoardFind = 5;
-			//Find current board in oldMoves
-			for(int j = 0; j < depthBoardFind;j++)
-			{
-				localDepthMoves3 = new ArrayList<CheckersMoveScore>();
-				for(int i = 0; i < oldMoves.get(j).size();i++)
-				{
-					if(data.equals(oldMoves.get(j).get(i).board))
-					{
-						//Found current board in oldMoves
-						localDepthMoves1 = oldMoves.get(j).get(i).moves;
-						if(localDepthMoves1 == null)
-						{
-							branchMoves = null;
-							//System.out.println(player + " moves of prevMove null");
-							makeAIMove();
-							return;
-						}
-						if(localDepthMoves1.size() == 1)
-						{
-							//Make only move
-							data.canvas.doMakeMove(localDepthMoves1.get(0).move);
-							//Store move made to be referred to in next move
-							prevMove = localDepthMoves1.get(0);
-							return;
-						}
-						boardFound = true;
-						break;
-					}
-					if(oldMoves.get(j).get(i).moves != null)
-						localDepthMoves3.addAll(oldMoves.get(j).get(i).moves);
-				}
-				if(boardFound || localDepthMoves3 == null || localDepthMoves3.size() == 0)
-					break;
-				oldMoves.add(localDepthMoves3);
-			}
-			if(localDepthMoves1.size() == 0)
-			{
-				branchMoves = null;
-				//System.out.println("Board not found on prev moves");
-				makeAIMove();
-				return;
-			}
-			moveScores = localDepthMoves1;
-			//Add to localBranchMoves, each branch of moves in localDepthMoves1 and its moves and moves.... 
-			localBranchMoves.add(localDepthMoves1);
-			while(localDepthMoves1 != null && localDepthMoves1.size() > 0)
-			{
-				ArrayList<CheckersMoveScore> localDepthMoves2 = new ArrayList<CheckersMoveScore>();
-				for(int j = 0;j < localDepthMoves1.size();j++)
-				{
-					CheckersMoveScore localMove = localDepthMoves1.get(j);
-					if(!localMove.finalState && localMove.moves != null)
-					{
-						for(int k = 0;k < localMove.moves.size();k++)
-						{
-							localDepthMoves2.add(localMove.moves.get(k));
-						}
-					}
-				}
-				if(localDepthMoves2 != null && localDepthMoves2.size() > 0)
-					localBranchMoves.add(localDepthMoves2);
-				localDepthMoves1 = localDepthMoves2;
-			}
-			//Finished new branchMoves
-			branchMoves = new ArrayList<ArrayList<CheckersMoveScore>>();
-			branchMoves = localBranchMoves;
 		}
 		//Try adding as many branches to depthMoves so depthMoves is size depth
+		increaseDepthToDepthMoves();
+		//System.out.println("Branch Depth: " + branchMoves.size());
+		
+		//Choose index of best scoring move
+		makeBestMove();
+	}
+	
+	private boolean calculateFirstMoves()
+	{
+		CheckersMove[] moves = data.getLegalMoves(player);
+		float[] scores = new float[moves.length];
+		for(int i = 0;i < moves.length;i++)
+		{
+			CheckersData localData = new CheckersData(data);
+			byte playerMove = localData.currentPlayer;
+			byte playerMoveNext = localData.currentPlayer;
+			
+			localData.makeMove(moves[i]);
+			scores[i] = poly.scoreBoard(localData);
+			if (moves[i].isJump())
+			{
+				CheckersMove[] localCheckersMove = localData.getLegalJumpsFrom(localData.currentPlayer,moves[i].toRow,moves[i].toCol);
+		         if (localCheckersMove == null) 
+		         {
+		        	 if (localData.currentPlayer == player)
+	        		 	  playerMoveNext = otherPlayer;
+		              else
+		            	  playerMoveNext = player;
+		         }
+			}
+	         else if (localData.currentPlayer == player)
+        	 		  playerMoveNext = otherPlayer;
+	              else
+	            	  playerMoveNext = player;
+			localData.currentPlayer = playerMoveNext;
+			moveScores.add(new CheckersMoveScore(scores[i],moves[i],localData,playerMove,playerMoveNext));
+		}
+		branchMoves = new ArrayList<ArrayList<CheckersMoveScore>>();
+		branchMoves.add(moveScores);
+		if(moveScores.size() == 1)
+		{
+			//Make only move
+			data.canvas.doMakeMove(moveScores.get(0).move);
+			//Store move made to be referred to in next move
+			prevMove = moveScores.get(0);
+			return true;
+		}
+		return false;
+	}
+	
+	private boolean updateBranchMovesFromPreviousBranch()
+	{
+		ArrayList<ArrayList<CheckersMoveScore>> localBranchMoves = new ArrayList<ArrayList<CheckersMoveScore>>();
+		ArrayList<ArrayList<CheckersMoveScore>> oldMoves = new ArrayList<ArrayList<CheckersMoveScore>>();
+		ArrayList<CheckersMoveScore> localDepthMoves1 = new ArrayList<CheckersMoveScore>();
+		ArrayList<CheckersMoveScore> localDepthMoves3 = new ArrayList<CheckersMoveScore>();
+		if(prevMove.moves == null)
+		{
+			System.out.println("prevMove moves is null");
+			branchMoves = null;
+			return calculateFirstMoves();
+		}
+		oldMoves.add(prevMove.moves);
+		boolean boardFound = false;
+		int depthBoardFind = 3;
+		//Find current board in oldMoves
+		for(int j = 0; j < depthBoardFind;j++)
+		{
+			localDepthMoves3 = new ArrayList<CheckersMoveScore>();
+			for(int i = 0; i < oldMoves.get(j).size();i++)
+			{
+				if(data.equals(oldMoves.get(j).get(i).board))
+				{
+					//Found current board in oldMoves
+					localDepthMoves1 = oldMoves.get(j).get(i).moves;
+					if(localDepthMoves1 == null)
+					{
+						branchMoves = null;
+						//System.out.println(player + " moves of prevMove null");
+						return calculateFirstMoves();
+					}
+					if(localDepthMoves1.size() == 1)
+					{
+						//Make only move
+						data.canvas.doMakeMove(localDepthMoves1.get(0).move);
+						//Store move made to be referred to in next move
+						prevMove = localDepthMoves1.get(0);
+						return true;
+					}
+					boardFound = true;
+					break;
+				}
+				if(oldMoves.get(j).get(i).moves != null)
+					localDepthMoves3.addAll(oldMoves.get(j).get(i).moves);
+			}
+			if(boardFound || localDepthMoves3 == null || localDepthMoves3.size() == 0)
+				break;
+			oldMoves.add(localDepthMoves3);
+		}
+		if(localDepthMoves1.size() == 0 || localDepthMoves1 == null)
+		{
+			branchMoves = null;
+			//System.out.println("Board not found on prev moves");
+			return calculateFirstMoves();
+		}
+		moveScores = localDepthMoves1;
+		//Add to localBranchMoves, each branch of moves in localDepthMoves1 and its moves and moves.... 
+		localBranchMoves.add(localDepthMoves1);
+		while(localDepthMoves1 != null && localDepthMoves1.size() > 0)
+		{
+			ArrayList<CheckersMoveScore> localDepthMoves2 = new ArrayList<CheckersMoveScore>();
+			for(int j = 0;j < localDepthMoves1.size();j++)
+			{
+				CheckersMoveScore localMove = localDepthMoves1.get(j);
+				if(!localMove.finalState && localMove.moves != null)
+				{
+					for(int k = 0;k < localMove.moves.size();k++)
+					{
+						localDepthMoves2.add(localMove.moves.get(k));
+					}
+				}
+			}
+			if(localDepthMoves2 != null && localDepthMoves2.size() > 0)
+				localBranchMoves.add(localDepthMoves2);
+			localDepthMoves1 = localDepthMoves2;
+		}
+		//Finished new branchMoves
+		branchMoves = localBranchMoves;
+		return false;
+	}
+	
+	private void increaseDepthToDepthMoves()
+	{
 		int branchSize = branchMoves.size();
 		int localDepth = depth - branchSize;
 		for(int i = 0;i < localDepth;i++)
 		{
-			//If time limit reached stop adding branches to brancMoves
+			//If time limit reached stop adding branches to branchMoves
 			if(!increaseDepth())
 			{
 				break;
 			}
 			//Remove poor moves from branch
-			//Sorted by score from low to high
-			//Removes low scores for Red moves, high scores for Black moves
-			if( i >= 5)
-			{
-				Collections.sort(branchMoves.get(branchMoves.size()-1));
-				while(branchMoves.get(branchMoves.size()-1).size() > maxBranchSize)
-				{
-					if(branchMoves.get(branchMoves.size()-1).get(0).playerMove == CheckersData.RED)
-						branchMoves.get(branchMoves.size()-1).remove(0);
-					else
-						branchMoves.get(branchMoves.size()-1).remove(branchMoves.get(branchMoves.size()-1).size()-1);
-				}
-			}
+			pruneBranchMoves(i);
 			//Add moves added by IncreaseDepth to depthMoves
 			ArrayList<CheckersMoveScore> localDepthMoves = new ArrayList<CheckersMoveScore>();
 			for(int j = 0;j < branchMoves.get(branchMoves.size()-1).size();j++)
@@ -228,9 +248,27 @@ public class AI
 			if(localDepthMoves != null && localDepthMoves.size() >  0)
 				branchMoves.add(localDepthMoves);
 		}
-		//System.out.println("Branch Depth: " + branchMoves.size());
-		
-		//Choose index of best scoring move
+	}
+
+	private void pruneBranchMoves(int i)
+	{
+		//Sorted by score from low to high
+		//Removes low scores for Red moves, high scores for Black moves
+		if( i >= 5)
+		{
+			Collections.sort(branchMoves.get(branchMoves.size()-1));
+			while(branchMoves.get(branchMoves.size()-1).size() > maxBranchSize)
+			{
+				if(branchMoves.get(branchMoves.size()-1).get(0).playerMove == CheckersData.RED)
+					branchMoves.get(branchMoves.size()-1).remove(0);
+				else
+					branchMoves.get(branchMoves.size()-1).remove(branchMoves.get(branchMoves.size()-1).size()-1);
+			}
+		}
+	}
+	
+	private void makeBestMove()
+	{
 		int bestMoveIndex = 0;
 		if(player == CheckersData.RED)
 		{

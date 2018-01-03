@@ -24,7 +24,7 @@ public class AITest
 	public void increaseDepthTest()
 	{
 		//lower depth, so can add another depth
-		ai.depth = 7;
+		ai.depth = 4;
 		ai.makeAIMove();
 		assertNull("AI search branches should not be null after making more",
 				ai.branchMoves.get(ai.branchMoves.size()-1).get(0).moves);

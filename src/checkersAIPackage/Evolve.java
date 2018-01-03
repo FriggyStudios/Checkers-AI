@@ -15,6 +15,8 @@ public class Evolve
 	private int failures = 0;
 	protected int gamesWon;
 	private String polyFileName;
+	private InnerCount count = new InnerCount();
+	
 	
 	Evolve(AI newAIRed,AI newAIBlack,String newPolyFileName)
 	{
@@ -59,8 +61,8 @@ public class Evolve
 			if((Math.random() < 2f*lengthInverse))
 			{
 				change = true;
-				float x = (float)(Math.random() * 2 - 1);
-				float mutation = (x * step);
+				float fractionStep = (float)(Math.random() * 2 - 1);
+				float mutation = (fractionStep * step);
 				float coeff = newPoly.coefficients.get(i) + mutation;
 				coeff = Math.min(coeff, 1);
 				coeff = Math.max(coeff, 0);
@@ -138,57 +140,11 @@ public class Evolve
 	}
 
 	protected void endGameDraw(CheckersData dataLocal)
-	{
-		int RedPieces=0; int BlackPieces = 0;
-		int RedKingPieces = 0; int BlackKingPieces = 0;
-		
-		for(int i = 0;i < 8;i+=2)
-		{	
-			for(int j = 1;j < 8;j+=2)
-			{
-				if(dataLocal.board.Get(i, j) == CheckersData.RED)
-				{
-					RedPieces++;
-				}
-				else if(dataLocal.board.Get(i, j) == CheckersData.BLACK)
-				{
-					BlackPieces++;				
-				}
-				else if(dataLocal.board.Get(i, j) == CheckersData.RED_KING)
-				{
-					RedKingPieces++;
-				}
-				else if(dataLocal.board.Get(i, j) == CheckersData.BLACK_KING)
-				{
-					BlackKingPieces++;		
-				}
-			}
-		}
-		for(int i = 1;i < 8;i+=2)
-		{
-			for(int j = 0;j < 8;j+=2)
-			{
-				if(dataLocal.board.Get(i, j) == CheckersData.RED)
-				{
-					RedPieces++;
-				}
-				else if(dataLocal.board.Get(i, j) == CheckersData.BLACK)
-				{
-					BlackPieces++;
-				}
-				else if(dataLocal.board.Get(i, j) == CheckersData.RED_KING)
-				{
-					RedKingPieces++;
-				}
-				else if(dataLocal.board.Get(i, j) == CheckersData.BLACK_KING)
-				{
-					BlackKingPieces++;		
-				}
-			}
-		}
+	{	
+		boolean redWon = count.whoWonDrawenGame(dataLocal);
 		if(gamesWon == 0)
 		{
-			if(BlackPieces+BlackKingPieces*2 > RedPieces+RedKingPieces*2)
+			if(!redWon)
 			{
 				gamesWon = 1;
 			}
@@ -202,7 +158,7 @@ public class Evolve
 		}
 		else
 		{
-			if(BlackPieces+BlackKingPieces*2 < RedPieces+RedKingPieces*2)
+			if(redWon)
 			{
 				successes++;
 				parentPoly = new Polynomial(aiRed.poly);	
@@ -235,5 +191,57 @@ public class Evolve
 			}
 		}		
 	}
+	private class InnerCount
+	{
 
+		int RedPieces=0; int BlackPieces = 0;
+		int RedKingPieces = 0; int BlackKingPieces = 0;		
+	
+		//Returns true for Red wins
+		boolean whoWonDrawenGame(CheckersData dataLocal)
+		{
+			RedPieces=0; BlackPieces = 0;
+			RedKingPieces = 0; BlackKingPieces = 0;
+			
+			for(int i = 0;i < 8;i+=2)
+			{	
+				for(int j = 1;j < 8;j+=2)
+				{
+					count(dataLocal,i,j);
+				}
+			}
+			for(int i = 1;i < 8;i+=2)
+			{
+				for(int j = 0;j < 8;j+=2)
+				{
+					count(dataLocal,i,j);
+				}
+			}
+			if(BlackPieces+BlackKingPieces*2 > RedPieces+RedKingPieces*2)
+			{
+				return false;
+			}
+			return true;
+		}
+		
+		private void count(CheckersData dataLocal,int i,int j)
+		{
+			if(dataLocal.board.Get(i, j) == CheckersData.RED)
+			{
+				RedPieces++;
+			}
+			else if(dataLocal.board.Get(i, j) == CheckersData.BLACK)
+			{
+				BlackPieces++;				
+			}
+			else if(dataLocal.board.Get(i, j) == CheckersData.RED_KING)
+			{
+				RedKingPieces++;
+			}
+			else if(dataLocal.board.Get(i, j) == CheckersData.BLACK_KING)
+			{
+				BlackKingPieces++;		
+			}
+		}
+	}
 }
