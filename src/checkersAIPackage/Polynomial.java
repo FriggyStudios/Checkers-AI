@@ -4,11 +4,17 @@ import java.util.ArrayList;
 
 public class Polynomial implements java.io.Serializable
 {
-	ArrayList<Float> coefficients;
+	private static final long serialVersionUID = 727970146609602996L;
+	protected ArrayList<Float> coefficients;
+	private final int coefficientsLength = 6;
 	
-	public Polynomial(ArrayList<Float> thisCoefficients)
+	public Polynomial(ArrayList<Float> newCoefficients)
 	{
-		coefficients = thisCoefficients;
+		if(newCoefficients.size() != coefficientsLength)
+		{
+			throw new java.lang.RuntimeException("Coefficients passed to Polynomial not length: " + coefficientsLength);
+		}
+		coefficients = new ArrayList<Float>(newCoefficients);
 	}
 	public Polynomial(Polynomial poly)
 	{
@@ -17,15 +23,16 @@ public class Polynomial implements java.io.Serializable
 
 	//Favourability board position for player red
 	//Returns float from low(bad for red) to high(good for red)
+	//{RedPieces,-BlackPieces,RedKingPieces,-BlackKingPieces,RedAdjacent,-BlackAdjacent,
+	//RedCentre,-BlackCentre,RedToKing,-BlackToKing,RedBackTile,-BlackBackTile}
 	public float scoreBoard(CheckersData dataLocal)
 	{
-		//{RedPieces,-BlackPieces,RedKingPieces,-BlackKingPieces,RedAdjacent,-BlackAdjacent,
-		//RedCentre,-BlackCentre,RedToKing,-BlackToKing}
 		int RedPieces=0; int BlackPieces = 0;
 		int RedKingPieces = 0; int BlackKingPieces = 0;
 		int RedAdjacent = 0; int BlackAdjacent = 0;
 		int RedCentre = 0; int BlackCentre = 0;
 		int RedToKing = 0; int BlackToKing = 0;
+		int RedBackTile = 0; int BlackBackTile = 0;
 		
 		//Calculate Red and Black centre 3,3 3,5 4,2 4,4
 		if(dataLocal.board.Get(3, 3) == CheckersData.RED ||
@@ -69,7 +76,7 @@ public class Polynomial implements java.io.Serializable
 			BlackCentre++;
 		}
 		
-		//Calculate Red and Black piece, king, toKing and adjacent
+		//Calculate Red and Black piece, king, toKing, adjacent and backTile
 		for(int i = 0;i < 8;i+=2)
 		{
 			for(int j = 1;j < 8;j+=2)
@@ -78,12 +85,19 @@ public class Polynomial implements java.io.Serializable
 				{
 					RedPieces++;
 					RedToKing += 8-i;
+					if(i == 7)
+					{
+						RedBackTile++;
+					}
 				}
 				else if(dataLocal.board.Get(i, j) == CheckersData.BLACK)
 				{
 					BlackPieces++;
 					BlackToKing += i;
-					
+					if(i == 0)
+					{
+						BlackBackTile++;
+					}					
 				}
 				else if(dataLocal.board.Get(i, j) == CheckersData.RED_KING)
 				{
@@ -132,10 +146,20 @@ public class Polynomial implements java.io.Serializable
 				if(dataLocal.board.Get(i, j) == CheckersData.RED)
 				{
 					RedPieces++;
+					RedToKing += 8-i;
+					if(i == 7)
+					{
+						RedBackTile++;
+					}
 				}
 				else if(dataLocal.board.Get(i, j) == CheckersData.BLACK)
 				{
 					BlackPieces++;
+					BlackToKing += i;
+					if(i == 0)
+					{
+						BlackBackTile++;
+					}
 				}
 				else if(dataLocal.board.Get(i, j) == CheckersData.RED_KING)
 				{
@@ -186,5 +210,12 @@ public class Polynomial implements java.io.Serializable
 					+ RedCentre*coefficients.get(3) - BlackCentre*coefficients.get(3)
 					+ RedToKing*coefficients.get(4) - BlackToKing*coefficients.get(4);
 		return score;
+	}
+	
+	public String toString()
+	{
+		String s = "Pieces,KingPieces,Adjacent,Centre,ToKing,BackTile\n";
+		s += coefficients.toString();
+		return s;
 	}
 }

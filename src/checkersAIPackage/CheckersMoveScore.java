@@ -98,7 +98,7 @@ public class CheckersMoveScore implements Comparable<CheckersMoveScore>
 	}
 	public int compareTo(CheckersMoveScore other)
 	{
-		return (int)((score-other.score)*10000);
+		return (int)((score-other.score)*1000000);
 	}
 }
 

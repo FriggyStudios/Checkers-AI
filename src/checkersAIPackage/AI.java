@@ -1,36 +1,52 @@
 package checkersAIPackage;
 
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 
 public class AI
 {
+	static final String fileName = "heuristicPolynomial.dat";
 	Polynomial poly;
 	CheckersData data;
 	byte player, otherPlayer;
-	int depth = 7;
+	int depth = 8;
 	ArrayList<ArrayList<CheckersMoveScore>> branchMoves;
 	CheckersMoveScore prevMove;
 	//Max time allowed in IncreaseDepth
-	int timePerIncreaseDepth = 25000;
+	int timePerIncreaseDepth = 10000;
 	//Max size of list in branchMoves
-	float maxBranchSize = 300000;
+	float maxBranchSize = 1000;
 	
 	public AI(CheckersData data,byte newPlayer,byte newOtherPlayer)
 	{		
 		this.data = data;
 		player = newPlayer;
-		otherPlayer = newOtherPlayer;
-		//Board properties multiplied by polynomialCoefficients values in that order to calculate favourability of a board to a player
-		//{RedPieces,-BlackPieces,RedKingPieces,-BlackKingPieces,RedAdjacent,-BlackAdjacent,
-		//RedCentre,-BlackCentre,RedToKing,-BlackToKing}
-		ArrayList<Float>  polynomialCoefficients = new ArrayList<Float>();
-		polynomialCoefficients.add(.1f);
-		polynomialCoefficients.add(.13f);
-		polynomialCoefficients.add(.01f);
-		polynomialCoefficients.add(.03f);
-		polynomialCoefficients.add(.005f);
-		poly = new Polynomial(polynomialCoefficients);
+		otherPlayer = newOtherPlayer;//Get polynomial from serialized file
+		try	 {
+	         FileInputStream fileIn = new FileInputStream(fileName);
+	         ObjectInputStream in = new ObjectInputStream(fileIn);
+	         poly = (Polynomial) in.readObject();
+	         in.close();
+	         fileIn.close();
+	      } catch (IOException i) {
+	    	//{RedPieces,-BlackPieces,RedKingPieces,-BlackKingPieces,RedAdjacent,-BlackAdjacent,
+	  		//RedCentre,-BlackCentre,RedToKing,-BlackToKing,RedBackTile,-BlackBackTile}
+	  		ArrayList<Float>  polynomialCoefficients = new ArrayList<Float>();
+	  		polynomialCoefficients.add(0.1f);
+	  		polynomialCoefficients.add(0.13f);
+	  		polynomialCoefficients.add(0.0001f);
+	  		polynomialCoefficients.add(0.0001f);
+	  		polynomialCoefficients.add(0.00001f);
+	  		polynomialCoefficients.add(0.00002f);
+	  		poly = new Polynomial(polynomialCoefficients);
+	      } catch (ClassNotFoundException c) {
+	         System.out.println("Employee class not found");
+	         c.printStackTrace();
+	         return;
+	      }
 	}	
 	
 	public AI(CheckersData data,byte newPlayer,byte newOtherPlayer,Polynomial newPoly)
@@ -56,7 +72,7 @@ public class AI
 		
 		//branchMoves null on first MakeAIMove call or if failure in finding board in previous branchMoves
 		//Calculate first list of moves for brancMoves
-		if(branchMoves == null)
+		if(branchMoves == null || branchMoves != null)
 		{
 			for(int i = 0;i < moves.length;i++)
 			{
@@ -118,7 +134,7 @@ public class AI
 						if(localDepthMoves1 == null)
 						{
 							branchMoves = null;
-							System.out.println("moves of prevMove null");
+							//System.out.println(player + " moves of prevMove null");
 							makeAIMove();
 							return;
 						}
@@ -143,7 +159,7 @@ public class AI
 			if(localDepthMoves1.size() == 0)
 			{
 				branchMoves = null;
-				System.out.println("Board not found on prev moves");
+				//System.out.println("Board not found on prev moves");
 				makeAIMove();
 				return;
 			}
@@ -172,7 +188,7 @@ public class AI
 			branchMoves = new ArrayList<ArrayList<CheckersMoveScore>>();
 			branchMoves = localBranchMoves;
 		}
-		//Try adding as many branches to depthMoves so depthMoves is size deoth
+		//Try adding as many branches to depthMoves so depthMoves is size depth
 		int branchSize = branchMoves.size();
 		int localDepth = depth - branchSize;
 		for(int i = 0;i < localDepth;i++)
@@ -185,15 +201,16 @@ public class AI
 			//Remove poor moves from branch
 			//Sorted by score from low to high
 			//Removes low scores for Red moves, high scores for Black moves
-			Collections.sort(branchMoves.get(branchMoves.size()-1));
-			while(branchMoves.get(branchMoves.size()-1).size() > maxBranchSize)
+			if( i >= 5)
 			{
-				if(branchMoves.get(branchMoves.size()-1).get(0).playerMove == CheckersData.RED)
-					branchMoves.get(branchMoves.size()-1).remove(0);
-				else if(branchMoves.get(branchMoves.size()-1).get(branchMoves.get(branchMoves.size()-1).size()-1).playerMove == CheckersData.BLACK)
-					branchMoves.get(branchMoves.size()-1).remove(branchMoves.get(branchMoves.size()-1).size()-1);
-				else
-					break;
+				Collections.sort(branchMoves.get(branchMoves.size()-1));
+				while(branchMoves.get(branchMoves.size()-1).size() > maxBranchSize)
+				{
+					if(branchMoves.get(branchMoves.size()-1).get(0).playerMove == CheckersData.RED)
+						branchMoves.get(branchMoves.size()-1).remove(0);
+					else
+						branchMoves.get(branchMoves.size()-1).remove(branchMoves.get(branchMoves.size()-1).size()-1);
+				}
 			}
 			//Add moves added by IncreaseDepth to depthMoves
 			ArrayList<CheckersMoveScore> localDepthMoves = new ArrayList<CheckersMoveScore>();
@@ -211,15 +228,29 @@ public class AI
 			if(localDepthMoves != null && localDepthMoves.size() >  0)
 				branchMoves.add(localDepthMoves);
 		}
-		System.out.println("Branch Depth: " + branchMoves.size());
+		//System.out.println("Branch Depth: " + branchMoves.size());
 		
 		//Choose index of best scoring move
 		int bestMoveIndex = 0;
-		for(int i = 0;i < moveScores.size();i++)
+		if(player == CheckersData.RED)
 		{
-			if(moveScores.get(i).score > moveScores.get(bestMoveIndex).score)
+			for(int i = 0;i < moveScores.size();i++)
 			{
-				bestMoveIndex = i;
+				if(moveScores.get(i).score > moveScores.get(bestMoveIndex).score)
+				{
+					bestMoveIndex = i;
+				}
+			}
+		}
+		else
+		{
+			bestMoveIndex = 0;
+			for(int i = 0;i < moveScores.size();i++)
+			{
+				if(moveScores.get(i).score < moveScores.get(bestMoveIndex).score)
+				{
+					bestMoveIndex = i;
+				}
 			}
 		}
 		//Make best move

@@ -1,0 +1,8 @@
+/**
+ * 
+ */
+/**
+ * @author kevin
+ *
+ */
+package checkersAIPackage;

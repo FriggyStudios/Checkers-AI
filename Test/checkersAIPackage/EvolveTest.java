@@ -52,6 +52,7 @@ public class EvolveTest
 	public void endGameParentLosesTest()
 	{
 		evolve.parentAI = evolve.aiBlack;
+		evolve.gamesWon = 1;
 		evolve.endGame(aiRed);
 		assertEquals("Parent polynomial should update when parent loses",
 				aiRed.poly.coefficients,evolve.parentPoly.coefficients);

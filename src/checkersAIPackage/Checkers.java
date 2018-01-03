@@ -142,7 +142,7 @@ class CheckersCanvas extends Canvas implements ActionListener, MouseListener {
       board = new CheckersData(this);
       aiRed = new AI(board,CheckersData.RED,CheckersData.BLACK);
       aiBlack = new AI(board,CheckersData.BLACK,CheckersData.RED);
-      evolve = new Evolve(aiRed,aiBlack,"heuristicPolynomial.ser");
+      evolve = new Evolve(aiRed,aiBlack,AI.fileName);
       setNotEvol();
       doNewGame();
       aiRed.makeAIMove();
@@ -186,7 +186,7 @@ class CheckersCanvas extends Canvas implements ActionListener, MouseListener {
 
    void doNewGame() {
          // Begin a new game.
-      if (gameInProgress == true) {
+      if (gameInProgress == true && !evol) {
              // This should not be possible, but it doens't 
              // hurt to check.
          message.setText("Finish the current game first!");
@@ -201,10 +201,10 @@ class CheckersCanvas extends Canvas implements ActionListener, MouseListener {
       newGameButton.setEnabled(false);
       resignButton.setEnabled(true);
       evolButton.setEnabled(false);
+      board.movesCount = 0;
       repaint();
    }
    
-
    void doResign() {
           // Current player resigns.  Game ends.  Opponent wins.
        if (gameInProgress == false) {
@@ -213,13 +213,13 @@ class CheckersCanvas extends Canvas implements ActionListener, MouseListener {
        }
        setNotEvol();
        if (board.currentPlayer == CheckersData.RED)
-          gameOver("RED resigns.  BLACK wins.");
+          gameOver("RED resigns.  BLACK wins.",aiBlack);
        else
-          gameOver("BLACK resigns.  RED winds.");
+          gameOver("BLACK resigns.  RED winds.",aiRed);
    }
    
 
-   void gameOver(String str) {
+   void gameOver(String str,AI winner) {
           // The game ends.  The parameter, str, is displayed as a message
           // to the user.  The states of the buttons are adjusted so playes
           // can start a new game.
@@ -229,6 +229,7 @@ class CheckersCanvas extends Canvas implements ActionListener, MouseListener {
       gameInProgress = false;
       if(evol)
       {
+    	  evolve.endGame(winner);
 	      evolButton.setEnabled(false);
 	      setEvol();
 	      doNewGame();
@@ -293,7 +294,7 @@ class CheckersCanvas extends Canvas implements ActionListener, MouseListener {
           // This is called when the current player has chosen the specified
           // move.  Make the move, and then either end or continue the game
           // appropriately.
-          
+      
       board.makeMove(move);
       
       /* If the move was a jump, it's possible that the player has another
@@ -324,7 +325,7 @@ class CheckersCanvas extends Canvas implements ActionListener, MouseListener {
     	  board.currentPlayer = CheckersData.BLACK;
     	  board.legalMoves = board.getLegalMoves(board.currentPlayer);
          if (board.legalMoves == null)
-            gameOver("BLACK has no moves.  RED wins.");
+            gameOver("BLACK has no moves.  RED wins.",aiRed);
          else if (board.legalMoves[0].isJump())
             message.setText(makingMoveText +  "You must jump.");
          else
@@ -334,7 +335,7 @@ class CheckersCanvas extends Canvas implements ActionListener, MouseListener {
     	  board.currentPlayer = CheckersData.RED;
     	  board.legalMoves = board.getLegalMoves(board.currentPlayer);
          if (board.legalMoves == null)
-            gameOver("RED has no moves.  BLACK wins.");
+            gameOver("RED has no moves.  BLACK wins.",aiBlack);
          else if (board.legalMoves[0].isJump())
             message.setText("Computer is making their move");
          else
@@ -582,6 +583,8 @@ class CheckersData {
 
    CheckersMove[] legalMoves;  // An array containing the legal moves for the
                                //   current player.   
+   int movesCount = 0;
+   int movesBeforeDraw = 100;
 
    public CheckersData(CheckersCanvas canvas) {
          // Constructor.  Create the board and set it up for a new game.
@@ -671,6 +674,12 @@ public void setUpGame() {
    public void makeMove(CheckersMove move) {
          // Make the specified move.  It is assumed that move
          // is non-null and that the move it represents is legal.
+	   if(movesCount >= movesBeforeDraw)
+	   {
+		   canvas.evolve.endGameDraw(this);
+		   canvas.evolve.init();
+		   canvas.doNewGame();
+	   }
       makeMove(move.fromRow, move.fromCol, move.toRow, move.toCol);
    }
    
@@ -681,6 +690,7 @@ public void setUpGame() {
          // jumped piece is removed from the board.  If a piece moves
          // the last row on the opponent's side of the board, the 
          // piece becomes a king.
+	  movesCount++;
       board.Add(board.Get(fromRow, fromCol),toRow, toCol);
       board.Add(EMPTY, fromRow, fromCol);
       if (fromRow - toRow == 2 || fromRow - toRow == -2) {
