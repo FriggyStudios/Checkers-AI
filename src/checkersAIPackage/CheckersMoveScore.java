@@ -11,6 +11,7 @@ public class CheckersMoveScore implements Comparable<CheckersMoveScore>
 	ArrayList<CheckersMoveScore> moves;
 	//finalState true if board after move played is an end game board
 	boolean finalState = false;
+	byte playerWin;
 	CheckersMoveScore(float score,CheckersMove move,CheckersData board,byte playerMove,byte playerNextMove)
 	{
 		this.playerMove = playerMove;

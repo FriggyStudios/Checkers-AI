@@ -2,6 +2,8 @@ package checkersAIPackage;
 
 import static org.junit.Assert.*;
 
+import java.util.ArrayList;
+
 import org.junit.*;
 
 public class AITest 
@@ -11,13 +13,18 @@ public class AITest
 	@Before
  	public void setUp()
 	{
-		ai = new AI(new CheckersData(new CheckersCanvas()),CheckersData.RED,CheckersData.BLACK);
-		assertNotNull(ai);
+		CheckersData data = new CheckersData(new CheckersCanvas());
+		ai = new AI(data,CheckersData.RED,CheckersData.BLACK);
 	}
  	@After
  	public void setDown()
  	{
  		ai = null;
+ 	}
+ 	@Test
+ 	public void aiSetupTest()
+ 	{
+		assertNotNull("AI constructed should not be null",ai);
  	}
 	@Test
 	public void increaseDepthToDepthMovesTest()
@@ -44,10 +51,13 @@ public class AITest
 	public void updateBranchMovesFromPreviousBranchTest()
 	{
 		ai.makeAIMove();
+		AI ai2 = new AI(ai.data,CheckersData.BLACK,CheckersData.RED);
+		ai2.makeAIMove();
+		ai.moveScores = new ArrayList<CheckersMoveScore>();
 		int size = ai.branchMoves.size();
 		ai.updateBranchMovesFromPreviousBranch();
-		assertEquals("updateBranchMovesFromPreviousBranch should find board in previously searched branchMoves, one move made so one depth less",
-				1, ai.branchMoves.size());
+		assertEquals("updateBranchMovesFromPreviousBranch two moves made so two depth less",
+				size-2, ai.branchMoves.size());
 	}
 	@Ignore
 	public void pruneBranchMovesTest()

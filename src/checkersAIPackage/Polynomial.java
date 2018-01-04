@@ -13,6 +13,7 @@ public class Polynomial implements java.io.Serializable
 	int RedCentre = 0; int BlackCentre = 0;
 	int RedToKing = 0; int BlackToKing = 0;
 	int RedBackTile = 0; int BlackBackTile = 0;
+	int endGame = 0;
 	
 	public Polynomial(ArrayList<Float> newCoefficients)
 	{
@@ -99,6 +100,7 @@ public class Polynomial implements java.io.Serializable
 		 RedCentre = 0;  BlackCentre = 0;
 		 RedToKing = 0;  BlackToKing = 0;
 		 RedBackTile = 0;  BlackBackTile = 0;
+		 endGame = 0;
 		
 		//Calculate Red and Black centre 3,3 3,5 4,2 4,4
 		if(dataLocal.board.Get(3, 3) == CheckersData.RED ||
@@ -159,12 +161,40 @@ public class Polynomial implements java.io.Serializable
 			}
 		}
 		
+		//Check if one player has no pieces
+		if(RedPieces == 0)
+		{
+			endGame = -10000000;
+		}
+		else if(BlackPieces == 0)
+		{
+			endGame = 10000000;
+		}
+		//Check if player to move has no moves
+		else
+		{
+			CheckersMove[] moves = dataLocal.getLegalMoves(CheckersData.RED);
+			if(moves == null)
+			{
+				endGame = -10000000;
+			}
+			else 
+			{
+				moves = dataLocal.getLegalMoves(CheckersData.BLACK);
+				if(moves == null)
+				{
+					endGame = 10000000;
+				}
+			}
+		}
+		
 		//Return score of favourability of board relative to red player
 		float score = RedPieces*coefficients.get(0) - BlackPieces*coefficients.get(0)
 				 	+ RedKingPieces*coefficients.get(1) - BlackKingPieces*coefficients.get(1)
 					+ RedAdjacent*coefficients.get(2) - BlackAdjacent*coefficients.get(2)
 					+ RedCentre*coefficients.get(3) - BlackCentre*coefficients.get(3)
-					+ RedToKing*coefficients.get(4) - BlackToKing*coefficients.get(4);
+					+ RedToKing*coefficients.get(4) - BlackToKing*coefficients.get(4)
+					+ endGame;
 		return score;
 	}
 	

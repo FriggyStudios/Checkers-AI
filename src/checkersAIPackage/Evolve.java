@@ -13,6 +13,7 @@ public class Evolve
 	private int generations = 0;
 	private int successes = 0;
 	private int failures = 0;
+	private int evolves = 0;
 	protected int gamesWon;
 	private String polyFileName;
 	private InnerCount count = new InnerCount();
@@ -33,7 +34,8 @@ public class Evolve
 	{
 		if(gamesWon == 0)
 		{
-			System.out.println("Generation:" + generations);
+			System.out.println("Generation: " + generations);
+			System.out.println("Evolves: " + evolves);
 			mutatedPoly = mutatePoly(parentPoly);
 			aiBlack.updatePolynomial(parentPoly);
 			aiRed.updatePolynomial(mutatedPoly);
@@ -113,6 +115,7 @@ public class Evolve
 			if(aiWinner != parentAI)
 			{
 				successes++;
+				evolves++;
 				parentPoly = new Polynomial(aiWinner.poly);	
 				//Print new polynomial
 				System.out.println("New evolved heuristic");
@@ -161,6 +164,7 @@ public class Evolve
 			if(redWon)
 			{
 				successes++;
+				evolves++;
 				parentPoly = new Polynomial(aiRed.poly);	
 				//Print new polynomial
 				System.out.println("New evolved heuristic");

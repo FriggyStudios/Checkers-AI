@@ -8,23 +8,30 @@ import java.util.Collections;
 
 public class AI
 {
-	static final String fileName = "heuristicPolynomial.dat";
+	static final String fileName = "heuristicPolynomial.txt";
 	Polynomial poly;
 	CheckersData data;
 	byte player, otherPlayer;
-	int depth = 15;
+	int scoreModifier = 1;
+	int depth = 8;
 	ArrayList<ArrayList<CheckersMoveScore>> branchMoves;
 	ArrayList<CheckersMoveScore> moveScores = new ArrayList<CheckersMoveScore>();
 	CheckersMoveScore prevMove;
 	//Max time allowed in IncreaseDepth
 	int timePerIncreaseDepth = 500;
-	//Max size of list in branchMoves
-	float maxBranchSize = 50000;
 	
 	public AI(CheckersData data,byte newPlayer,byte newOtherPlayer)
 	{		
 		this.data = data;
 		player = newPlayer;
+		if(player == CheckersData.RED)
+		{
+			scoreModifier = 1;
+		}
+		else
+		{
+			scoreModifier = -1;
+		}
 		otherPlayer = newOtherPlayer;//Get polynomial from serialized file
 		try	 {
 	         FileInputStream fileIn = new FileInputStream(fileName);
@@ -36,15 +43,15 @@ public class AI
 	    	//{RedPieces,-BlackPieces,RedKingPieces,-BlackKingPieces,RedAdjacent,-BlackAdjacent,
 	  		//RedCentre,-BlackCentre,RedToKing,-BlackToKing,RedBackTile,-BlackBackTile}
 	  		ArrayList<Float>  polynomialCoefficients = new ArrayList<Float>();
-	  		polynomialCoefficients.add(0.1f);
-	  		polynomialCoefficients.add(0.13f);
-	  		polynomialCoefficients.add(0.0001f);
-	  		polynomialCoefficients.add(0.0001f);
-	  		polynomialCoefficients.add(0.00001f);
-	  		polynomialCoefficients.add(0.00002f);
+	  		polynomialCoefficients.add(0.04f);
+	  		polynomialCoefficients.add(0.3f);
+	  		polynomialCoefficients.add(0.0882918f);
+	  		polynomialCoefficients.add(0.4091838f);
+	  		polynomialCoefficients.add(0.44403866f);
+	  		polynomialCoefficients.add(0.23308124f);
 	  		poly = new Polynomial(polynomialCoefficients);
 	      } catch (ClassNotFoundException c) {
-	         System.out.println("Employee class not found");
+	         //System.out.println("Employee class not found");
 	         c.printStackTrace();
 	         return;
 	      }
@@ -54,6 +61,14 @@ public class AI
 	{
 		this.data = data;
 		player = newPlayer;
+		if(player == CheckersData.RED)
+		{
+			scoreModifier = 1;
+		}
+		else
+		{
+			scoreModifier = -1;
+		}
 		otherPlayer = newOtherPlayer;
 		poly = newPoly;
 	}
@@ -151,7 +166,7 @@ public class AI
 		ArrayList<CheckersMoveScore> localDepthMoves3 = new ArrayList<CheckersMoveScore>();
 		if(prevMove.moves == null)
 		{
-			System.out.println("prevMove moves is null");
+			//System.out.println("prevMove moves is null");
 			branchMoves = null;
 			return calculateFirstMoves();
 		}
@@ -192,10 +207,10 @@ public class AI
 				break;
 			oldMoves.add(localDepthMoves3);
 		}
-		if(localDepthMoves1.size() == 0 || localDepthMoves1 == null)
+		if(localDepthMoves1.size() == 0)
 		{
 			branchMoves = null;
-			//System.out.println("Board not found on prev moves");
+			//System.out.println("Moves empty");
 			return calculateFirstMoves();
 		}
 		moveScores = localDepthMoves1;
@@ -234,10 +249,11 @@ public class AI
 			//If time limit reached stop adding branches to branchMoves
 			if(!increaseDepth())
 			{
-				break;
+				return;
 			}
+
 			//Remove poor moves from branch
-			pruneBranchMoves(i);
+			pruneBranchMoves();
 			//Add moves added by IncreaseDepth to depthMoves
 			ArrayList<CheckersMoveScore> localDepthMoves = new ArrayList<CheckersMoveScore>();
 			for(int j = 0;j < branchMoves.get(branchMoves.size()-1).size();j++)
@@ -256,45 +272,35 @@ public class AI
 		}
 	}
 
-	protected void pruneBranchMoves(int i)
+	protected void pruneBranchMoves()
 	{
-		//Sorted by score from low to high
-		//Removes low scores for Red moves, high scores for Black moves
-		if( i >= 5)
+		//AlphaBeta pruning
+		ArrayList<CheckersMoveScore> headofFinalBranch = branchMoves.get(branchMoves.size()-1);
+		for(int i = 0; i < headofFinalBranch.size();i++)
 		{
-			Collections.sort(branchMoves.get(branchMoves.size()-1));
-			while(branchMoves.get(branchMoves.size()-1).size() > maxBranchSize)
+			if(!headofFinalBranch.get(i).finalState && 
+					headofFinalBranch.get(i).playerNextMove == player &&
+							headofFinalBranch.get(i).playerMove == otherPlayer)
 			{
-				if(branchMoves.get(branchMoves.size()-1).get(0).playerMove == CheckersData.RED)
-					branchMoves.get(branchMoves.size()-1).remove(0);
-				else
-					branchMoves.get(branchMoves.size()-1).remove(branchMoves.get(branchMoves.size()-1).size()-1);
+				for(int j = 0; j < headofFinalBranch.get(i).moves.size();j++)
+				{
+					if(headofFinalBranch.get(i).moves.get(j).score > headofFinalBranch.get(i).score)
+					{
+						headofFinalBranch.get(i).moves.remove(j);
+					}
+				}
 			}
-		}
+		}		
 	}
 	
 	protected int bestMove()
 	{
 		int bestMoveIndex = 0;
-		if(player == CheckersData.RED)
+		for(int i = 0;i < moveScores.size();i++)
 		{
-			for(int i = 0;i < moveScores.size();i++)
+			if(moveScores.get(i).score > moveScores.get(bestMoveIndex).score)
 			{
-				if(moveScores.get(i).score > moveScores.get(bestMoveIndex).score)
-				{
-					bestMoveIndex = i;
-				}
-			}
-		}
-		else
-		{
-			bestMoveIndex = 0;
-			for(int i = 0;i < moveScores.size();i++)
-			{
-				if(moveScores.get(i).score < moveScores.get(bestMoveIndex).score)
-				{
-					bestMoveIndex = i;
-				}
+				bestMoveIndex = i;
 			}
 		}
 		return bestMoveIndex;
@@ -322,7 +328,7 @@ public class AI
 					byte playerMove = localData.currentPlayer;
 					byte playerMoveNext = localData.currentPlayer;
 					localData.makeMove(moves[j]);
-					float score = poly.scoreBoard(localData);
+					float score = poly.scoreBoard(localData)*scoreModifier;
 					if (moves[j].isJump()) 
 					{
 						CheckersMove[] localCheckersMove = localData.getLegalJumpsFrom(localData.currentPlayer,moves[j].toRow,moves[j].toCol);
@@ -362,18 +368,38 @@ public class AI
 				{
 					for(int j = 0;j < localMove.moves.size();j++)
 					{
-						if(localMove.playerMove == CheckersData.RED)
+						if(player == CheckersData.RED)
 						{
-							if(localMove.moves.get(j).score > localMove.moves.get(scoreIndex).score)
+							if(localMove.playerMove == CheckersData.RED)
 							{
-								scoreIndex = j;
+								if(localMove.moves.get(j).score > localMove.moves.get(scoreIndex).score)
+								{
+									scoreIndex = j;
+								}
+							}
+							else
+							{
+								if(localMove.moves.get(j).score < localMove.moves.get(scoreIndex).score)
+								{
+									scoreIndex = j;
+								}
 							}
 						}
 						else
 						{
-							if(localMove.moves.get(j).score < localMove.moves.get(scoreIndex).score)
+							if(localMove.playerMove == CheckersData.RED)
 							{
-								scoreIndex = j;
+								if(localMove.moves.get(j).score < localMove.moves.get(scoreIndex).score)
+								{
+									scoreIndex = j;
+								}
+							}
+							else
+							{
+								if(localMove.moves.get(j).score > localMove.moves.get(scoreIndex).score)
+								{
+									scoreIndex = j;
+								}
 							}
 						}
 					}
