@@ -14,7 +14,7 @@ public class AI
 	byte player, otherPlayer;
 	int depth = 15;
 	ArrayList<ArrayList<CheckersMoveScore>> branchMoves;
-	ArrayList<CheckersMoveScore> moveScores;
+	ArrayList<CheckersMoveScore> moveScores = new ArrayList<CheckersMoveScore>();
 	CheckersMoveScore prevMove;
 	//Max time allowed in IncreaseDepth
 	int timePerIncreaseDepth = 500;
@@ -92,10 +92,15 @@ public class AI
 		//System.out.println("Branch Depth: " + branchMoves.size());
 		
 		//Choose index of best scoring move
-		makeBestMove();
+		int bestMoveIndex = bestMove();
+
+		//Make best move
+		data.canvas.doMakeMove(moveScores.get(bestMoveIndex).move);
+		//Store move made to be referred to in next move
+		prevMove = moveScores.get(bestMoveIndex);
 	}
 	
-	private boolean calculateFirstMoves()
+	protected boolean calculateFirstMoves()
 	{
 		CheckersMove[] moves = data.getLegalMoves(player);
 		float[] scores = new float[moves.length];
@@ -138,7 +143,7 @@ public class AI
 		return false;
 	}
 	
-	private boolean updateBranchMovesFromPreviousBranch()
+	protected boolean updateBranchMovesFromPreviousBranch()
 	{
 		ArrayList<ArrayList<CheckersMoveScore>> localBranchMoves = new ArrayList<ArrayList<CheckersMoveScore>>();
 		ArrayList<ArrayList<CheckersMoveScore>> oldMoves = new ArrayList<ArrayList<CheckersMoveScore>>();
@@ -216,10 +221,11 @@ public class AI
 		}
 		//Finished new branchMoves
 		branchMoves = localBranchMoves;
+		
 		return false;
 	}
 	
-	private void increaseDepthToDepthMoves()
+	protected void increaseDepthToDepthMoves()
 	{
 		int branchSize = branchMoves.size();
 		int localDepth = depth - branchSize;
@@ -250,7 +256,7 @@ public class AI
 		}
 	}
 
-	private void pruneBranchMoves(int i)
+	protected void pruneBranchMoves(int i)
 	{
 		//Sorted by score from low to high
 		//Removes low scores for Red moves, high scores for Black moves
@@ -267,7 +273,7 @@ public class AI
 		}
 	}
 	
-	private void makeBestMove()
+	protected int bestMove()
 	{
 		int bestMoveIndex = 0;
 		if(player == CheckersData.RED)
@@ -291,16 +297,13 @@ public class AI
 				}
 			}
 		}
-		//Make best move
-		data.canvas.doMakeMove(moveScores.get(bestMoveIndex).move);
-		//Store move made to be referred to in next move
-		prevMove = moveScores.get(bestMoveIndex);
+		return bestMoveIndex;
 	}
 	
 	//Calculate moves for last list of branchMoves' last list
 	//Updates scores back through branchMoves
 	//Return true if time limit timePerIncreaseDepth not reached, false otherwise
-	boolean increaseDepth()
+	protected boolean increaseDepth()
 	{		
 		//Calculate scores for each move in new depth
 		//Thread[] depthIncThreads = new Thread[branchMoves.get(maxDepth).size()];
