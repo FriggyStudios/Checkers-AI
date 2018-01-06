@@ -9,7 +9,7 @@ public class Evolve
 	AI parentAI;
 	Polynomial parentPoly;
 	Polynomial mutatedPoly;
-	private float step = 0.07f;
+	private float step = 0.1f;
 	private int generations = 0;
 	private int successes = 0;
 	private int failures = 0;

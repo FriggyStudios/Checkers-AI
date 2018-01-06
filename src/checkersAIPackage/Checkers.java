@@ -370,7 +370,8 @@ class CheckersCanvas extends Canvas implements ActionListener, MouseListener {
       
    }  // end doMakeMove();
    
-
+   float total = 0;
+   int times = 0;
    public void update(Graphics g) {
         // The paint method completely redraws the canvas, so don't erase
         // before calling paint().
@@ -380,7 +381,13 @@ class CheckersCanvas extends Canvas implements ActionListener, MouseListener {
     	  if(board.currentPlayer == CheckersData.RED)
 		      while(board.currentPlayer == CheckersData.RED)
 		      {
-		    	  aiRed.makeAIMove();
+
+		  		long startTime = System.currentTimeMillis();
+		    	 aiRed.makeAIMove();
+
+		 		total += System.currentTimeMillis()-startTime;
+		 		times++;
+		 		//System.out.println(total/times);
 		    	  /*try 
 	    	   	{
 					Thread.sleep(1000);
@@ -537,6 +544,8 @@ class CheckersMove {
    }
    CheckersMove(CheckersMove move)
    {
+	   if(move == null)
+		   return;
 	   fromRow = move.fromRow;
 	   fromCol = move.fromCol;
 	   toRow = move.toRow;
@@ -598,6 +607,8 @@ class CheckersData {
    
    public CheckersData(CheckersData data) 
    {
+	   if(data == null)
+		   return;
 	  board = new Board(data.board);
 	  this.currentPlayer = data.currentPlayer;
 	  this.legalMoves = data.legalMoves;

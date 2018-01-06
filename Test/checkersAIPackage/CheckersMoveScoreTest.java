@@ -26,10 +26,10 @@ public class CheckersMoveScoreTest
 	@Before
  	public void setUp()
 	{
-		move1 = new CheckersMoveScore(score,new CheckersMove(0,0,1,1),new CheckersData((CheckersCanvas)null),CheckersData.BLACK,CheckersData.RED);
-		move2 = new CheckersMoveScore(lowerScore,new CheckersMove(0,0,1,1),new CheckersData((CheckersCanvas)null),CheckersData.BLACK,CheckersData.RED);
-		move3 = new CheckersMoveScore(score,new CheckersMove(0,0,1,1),new CheckersData((CheckersCanvas)null),CheckersData.RED,CheckersData.BLACK);
-		move4 = new CheckersMoveScore(lowerScore,new CheckersMove(0,0,1,1),new CheckersData((CheckersCanvas)null),CheckersData.RED,CheckersData.BLACK);				
+		move1 = new CheckersMoveScore(null,score,new CheckersMove(0,0,1,1),new CheckersData((CheckersCanvas)null),CheckersData.BLACK,CheckersData.RED);
+		move2 = new CheckersMoveScore(null,lowerScore,new CheckersMove(0,0,1,1),new CheckersData((CheckersCanvas)null),CheckersData.BLACK,CheckersData.RED);
+		move3 = new CheckersMoveScore(null,score,new CheckersMove(0,0,1,1),new CheckersData((CheckersCanvas)null),CheckersData.RED,CheckersData.BLACK);
+		move4 = new CheckersMoveScore(null,lowerScore,new CheckersMove(0,0,1,1),new CheckersData((CheckersCanvas)null),CheckersData.RED,CheckersData.BLACK);				
 	}
  	@After
  	public void setDown()
@@ -89,7 +89,7 @@ public class CheckersMoveScoreTest
 		entries.add(0,CheckersData.RED_KING);
 		entries.add(20,CheckersData.RED);
 		board = new Board(entries);
-		NoBlackPieces = new CheckersMoveScore(score,new CheckersMove(0,0,1,1),new CheckersData(board),CheckersData.RED,CheckersData.BLACK);
+		NoBlackPieces = new CheckersMoveScore(null,score,new CheckersMove(0,0,1,1),new CheckersData(board),CheckersData.RED,CheckersData.BLACK);
 		
 		//NoRedPieces
 		entries = new ArrayList<Byte>();
@@ -100,7 +100,7 @@ public class CheckersMoveScoreTest
 		entries.add(14,CheckersData.BLACK);
 		entries.add(4,CheckersData.BLACK_KING);
 		board = new Board(entries);
-		NoRedPieces = new CheckersMoveScore(score,new CheckersMove(0,0,1,1),new CheckersData(board),CheckersData.BLACK,CheckersData.RED);
+		NoRedPieces = new CheckersMoveScore(null,score,new CheckersMove(0,0,1,1),new CheckersData(board),CheckersData.BLACK,CheckersData.RED);
 		
 		//NoBlackMoves
 		entries = new ArrayList<Byte>();
@@ -115,7 +115,7 @@ public class CheckersMoveScoreTest
 		entries.add(22,CheckersData.RED_KING);
 		entries.add(18,CheckersData.RED_KING);
 		board = new Board(entries);
-		NoBlackMoves = new CheckersMoveScore(score,new CheckersMove(0,0,1,1),new CheckersData(board),CheckersData.BLACK,CheckersData.RED);
+		NoBlackMoves = new CheckersMoveScore(null,score,new CheckersMove(0,0,1,1),new CheckersData(board),CheckersData.BLACK,CheckersData.RED);
 		
 		//NoRedMoves
 		entries = new ArrayList<Byte>();
@@ -130,7 +130,7 @@ public class CheckersMoveScoreTest
 		entries.add(22,CheckersData.BLACK_KING);
 		entries.add(18,CheckersData.BLACK_KING);
 		board = new Board(entries);
-		NoRedMoves = new CheckersMoveScore(score,new CheckersMove(0,0,1,1),new CheckersData(board),CheckersData.RED,CheckersData.BLACK);
+		NoRedMoves = new CheckersMoveScore(null,score,new CheckersMove(0,0,1,1),new CheckersData(board),CheckersData.RED,CheckersData.BLACK);
 		
 		//OpenGame
 		entries = new ArrayList<Byte>();
@@ -143,7 +143,7 @@ public class CheckersMoveScoreTest
 		entries.add(14,CheckersData.BLACK);
 		entries.add(4,CheckersData.BLACK_KING);
 		board = new Board(entries);
-		OpenGame = new CheckersMoveScore(score,new CheckersMove(0,0,1,1),new CheckersData(board),CheckersData.RED,CheckersData.BLACK);
+		OpenGame = new CheckersMoveScore(null,score,new CheckersMove(0,0,1,1),new CheckersData(board),CheckersData.RED,CheckersData.BLACK);
 
 		assertTrue("No black pieces, red should win",NoBlackPieces.finalState);
 		assertTrue("No red pieces, black should win",NoRedPieces.finalState);

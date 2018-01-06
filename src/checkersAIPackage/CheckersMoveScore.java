@@ -6,20 +6,22 @@ public class CheckersMoveScore implements Comparable<CheckersMoveScore>
 	byte playerMove;
 	byte playerNextMove;
 	float score;
+	CheckersMoveScore parent;
 	CheckersMove move;
 	CheckersData board;
 	ArrayList<CheckersMoveScore> moves;
 	//finalState true if board after move played is an end game board
 	boolean finalState = false;
 	byte playerWin;
-	CheckersMoveScore(float score,CheckersMove move,CheckersData board,byte playerMove,byte playerNextMove)
+	CheckersMoveScore(CheckersMoveScore parent,float score,CheckersMove move,CheckersData board,byte playerMove,byte playerNextMove)
 	{
 		this.playerMove = playerMove;
 		this.playerNextMove = playerNextMove;
 		this.score = score;
 		this.move = new CheckersMove(move);
 		this.board = new CheckersData(board);
-		
+		if(board == null)
+			return;
 		//Count black and red pieces
 		int RedPieces=0; int BlackPieces = 0;
 		for(int i = 1;i < 8;i+=2)

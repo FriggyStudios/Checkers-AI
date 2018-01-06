@@ -13,12 +13,12 @@ public class AI
 	CheckersData data;
 	byte player, otherPlayer;
 	int scoreModifier = 1;
-	int depth = 8;
+	int depth = 7;
 	ArrayList<ArrayList<CheckersMoveScore>> branchMoves;
 	ArrayList<CheckersMoveScore> moveScores = new ArrayList<CheckersMoveScore>();
 	CheckersMoveScore prevMove;
 	//Max time allowed in IncreaseDepth
-	int timePerIncreaseDepth = 500;
+	int timePerIncreaseDepth = 10000;
 	
 	public AI(CheckersData data,byte newPlayer,byte newOtherPlayer)
 	{		
@@ -51,7 +51,6 @@ public class AI
 	  		polynomialCoefficients.add(0.23308124f);
 	  		poly = new Polynomial(polynomialCoefficients);
 	      } catch (ClassNotFoundException c) {
-	         //System.out.println("Employee class not found");
 	         c.printStackTrace();
 	         return;
 	      }
@@ -143,7 +142,7 @@ public class AI
 	              else
 	            	  playerMoveNext = player;
 			localData.currentPlayer = playerMoveNext;
-			moveScores.add(new CheckersMoveScore(scores[i],moves[i],localData,playerMove,playerMoveNext));
+			moveScores.add(new CheckersMoveScore(null,scores[i],moves[i],localData,playerMove,playerMoveNext));
 		}
 		branchMoves = new ArrayList<ArrayList<CheckersMoveScore>>();
 		branchMoves.add(moveScores);
@@ -252,8 +251,6 @@ public class AI
 				return;
 			}
 
-			//Remove poor moves from branch
-			pruneBranchMoves();
 			//Add moves added by IncreaseDepth to depthMoves
 			ArrayList<CheckersMoveScore> localDepthMoves = new ArrayList<CheckersMoveScore>();
 			for(int j = 0;j < branchMoves.get(branchMoves.size()-1).size();j++)
@@ -270,28 +267,88 @@ public class AI
 			if(localDepthMoves != null && localDepthMoves.size() >  0)
 				branchMoves.add(localDepthMoves);
 		}
+		updateScores();
 	}
-
-	protected void pruneBranchMoves()
+	
+	/*private void updateScores()
 	{
-		//AlphaBeta pruning
-		ArrayList<CheckersMoveScore> headofFinalBranch = branchMoves.get(branchMoves.size()-1);
-		for(int i = 0; i < headofFinalBranch.size();i++)
+		//Update scores back through each branchMove
+		for(int i = branchMoves.size()-1;i >= 0;i--)
 		{
-			if(!headofFinalBranch.get(i).finalState && 
-					headofFinalBranch.get(i).playerNextMove == player &&
-							headofFinalBranch.get(i).playerMove == otherPlayer)
+			for(int k = 0;k < branchMoves.get(i).size();k++)
 			{
-				for(int j = 0; j < headofFinalBranch.get(i).moves.size();j++)
+				CheckersMoveScore localMove = branchMoves.get(i).get(k);
+				int scoreIndex = 0;
+				if(localMove.moves != null)
 				{
-					if(headofFinalBranch.get(i).moves.get(j).score > headofFinalBranch.get(i).score)
+					for(int j = 0;j < localMove.moves.size();j++)
 					{
-						headofFinalBranch.get(i).moves.remove(j);
+						if(localMove.playerMove == player)
+						{
+							if(localMove.moves.get(j).score > localMove.moves.get(scoreIndex).score)
+							{
+								scoreIndex = j;
+							}
+						}
+						else
+						{
+							if(localMove.moves.get(j).score < localMove.moves.get(scoreIndex).score)
+							{
+								scoreIndex = j;
+							}
+						}
 					}
+					localMove.UpdateScore(branchMoves.get(i).get(k).moves.get(scoreIndex).score);
 				}
 			}
-		}		
+		}
+	}*/
+
+	protected void updateScores()
+	{
+		//AlphaBeta pruning
+		if(branchMoves.size() < 1)
+			return;
+		CheckersMoveScore origin = new CheckersMoveScore(null,0,null,null,player,otherPlayer);
+		origin.IncreaseDepth(branchMoves.get(0));
+		alphabeta(origin,-Float.MAX_VALUE,Float.MAX_VALUE);
 	}
+	 
+	private float alphabeta(CheckersMoveScore node,float a,float b)
+	 {
+	       if(node.moves == null || node.moves.size() == 0)
+	           return node.score;
+	       if (node.playerMove == player)
+	       {
+	           float v = -Float.MAX_VALUE;
+	           for (CheckersMoveScore child : node.moves)
+	           {
+	        	   v = Math.max(v, alphabeta(child, a, b));
+	               a = Math.max(a, v);
+	               if (b <= a)
+	               {
+	            	   break;
+	               }
+	           } 
+	           node.score = v;
+	           return v;
+	       }
+	       else
+	       {
+	           float v = Float.MAX_VALUE;
+	           for(CheckersMoveScore child : node.moves)
+	           {
+	               v = Math.min(v, alphabeta(child, a, b));
+	               b = Math.min(b, v);
+	               if (b <= a)
+	               {
+	            	   break;
+	               }
+	           }
+	           node.score = v;
+	           return v;
+	       }
+	 }
 	
 	protected int bestMove()
 	{
@@ -345,7 +402,7 @@ public class AI
 			              else
 			            	  playerMoveNext = CheckersData.RED;
 					localData.currentPlayer = playerMoveNext;
-					localMoveScores.add(new CheckersMoveScore(score,moves[j],localData,playerMove,playerMoveNext));
+					localMoveScores.add(new CheckersMoveScore(branchMoves.get(branchMoves.size()-1).get(i),score,moves[j],localData,playerMove,playerMoveNext));
 				}	
 				branchMoves.get(branchMoves.size()-1).get(i).IncreaseDepth(localMoveScores);
 
@@ -354,57 +411,6 @@ public class AI
 			if(endTime - startTime > timePerIncreaseDepth)
 			{
 				return false;
-			}
-		}
-
-		//Update scores back through each branchMove
-		for(int i = branchMoves.size()-1;i >= 0;i--)
-		{
-			for(int k = 0;k < branchMoves.get(i).size();k++)
-			{
-				CheckersMoveScore localMove = branchMoves.get(i).get(k);
-				int scoreIndex = 0;
-				if(localMove.moves != null && !localMove.finalState)
-				{
-					for(int j = 0;j < localMove.moves.size();j++)
-					{
-						if(player == CheckersData.RED)
-						{
-							if(localMove.playerMove == CheckersData.RED)
-							{
-								if(localMove.moves.get(j).score > localMove.moves.get(scoreIndex).score)
-								{
-									scoreIndex = j;
-								}
-							}
-							else
-							{
-								if(localMove.moves.get(j).score < localMove.moves.get(scoreIndex).score)
-								{
-									scoreIndex = j;
-								}
-							}
-						}
-						else
-						{
-							if(localMove.playerMove == CheckersData.RED)
-							{
-								if(localMove.moves.get(j).score < localMove.moves.get(scoreIndex).score)
-								{
-									scoreIndex = j;
-								}
-							}
-							else
-							{
-								if(localMove.moves.get(j).score > localMove.moves.get(scoreIndex).score)
-								{
-									scoreIndex = j;
-								}
-							}
-						}
-					}
-					localMove.UpdateScore(branchMoves.get(i).get(k).moves.get(scoreIndex).score);
-				}
 			}
 		}
 		return true;

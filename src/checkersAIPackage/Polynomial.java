@@ -164,11 +164,11 @@ public class Polynomial implements java.io.Serializable
 		//Check if one player has no pieces
 		if(RedPieces == 0)
 		{
-			endGame = -10000000;
+			endGame = -10000;
 		}
 		else if(BlackPieces == 0)
 		{
-			endGame = 10000000;
+			endGame = 10000;
 		}
 		//Check if player to move has no moves
 		else
@@ -176,14 +176,14 @@ public class Polynomial implements java.io.Serializable
 			CheckersMove[] moves = dataLocal.getLegalMoves(CheckersData.RED);
 			if(moves == null)
 			{
-				endGame = -10000000;
+				endGame = -10000;
 			}
 			else 
 			{
 				moves = dataLocal.getLegalMoves(CheckersData.BLACK);
 				if(moves == null)
 				{
-					endGame = 10000000;
+					endGame = 10000;
 				}
 			}
 		}
